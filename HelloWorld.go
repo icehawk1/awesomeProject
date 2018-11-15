@@ -10,10 +10,12 @@ func main() {
 	chain.Mine()
 	chain.Mine()
 	chain.Mine()
-	fmt.Println(chain)
 
 	bytearr, _ := json.Marshal(chain)
 	encoded := fmt.Sprintf("%s",bytearr)
 	fmt.Println("chain: ",encoded)
-}
 
+	var secondChain Blockchain
+	json.Unmarshal(bytearr, secondChain)
+	fmt.Println(secondChain)
+}
