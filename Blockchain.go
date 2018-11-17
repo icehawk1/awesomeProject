@@ -19,16 +19,16 @@ type Block struct {
 }
 
 type transaction struct {
-	Outputs []output
-	inputs  []input
+	Outputs []txoutput
+	inputs  []txinput
 }
 
-type input struct {
-	from      *output
-	signature Signature
+type txinput struct {
+	from *txoutput
+	sig  Signature
 }
 
-type output struct {
+type txoutput struct {
 	value  int
 	pubkey ecdsa.PublicKey
 }
@@ -63,7 +63,7 @@ func (self *Blockchain) ComputeBlockHeight() (int, *Block) {
 
 // ------Private parts-----------------------------------------
 
-func (self *Block) computeHash() string {
+func (self *Block) ComputeHash() string {
 	input := fmt.Sprintf("%s%d",self.Payload,self.nonce)
 
 	if self.Prev != nil {

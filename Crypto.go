@@ -5,8 +5,8 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
-	"fmt"
 	"math/big"
+	"strconv"
 )
 
 type Signature struct {
@@ -23,19 +23,16 @@ func CreateKeypair() ecdsa.PrivateKey {
 	return *result
 }
 
-func SignInput(input *input, key ecdsa.PrivateKey) {
-	hash := sha256.Sum256([]byte(fmt.Sprintf("%X", input.from.value)))
-	bla := hash[:]
-	fmt.Println(bla)
-
+func SignInput(input *txinput, key ecdsa.PrivateKey) {
+	hash := sha256.Sum256([]byte(strconv.Itoa(input.from.value)))
 	r, s, err := ecdsa.Sign(rand.Reader, &key, hash[:])
 	if err != nil {
 		panic(err)
 	}
-	input.signature = Signature{r: *r, s: *s, hash:hash[:]}
+	input.sig = Signature{r: *r, s: *s, hash:hash[:]}
 }
 
-func CheckOutput(output output, sig Signature) bool {
-	valid := ecdsa.Verify(&output.pubkey, sig.hash, &sig.r, &sig.s)
+func CheckInput(input txinput) bool {
+	valid := ecdsa.Verify(&input.from.pubkey, input.sig.hash, &input.sig.r, &input.sig.s)
 	return valid
 }

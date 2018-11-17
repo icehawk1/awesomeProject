@@ -15,3 +15,4 @@ func TestGenerateHash(t *testing.T) {
 		t.Errorf("Got wrong Hash: %s",actual)
 	}
 }
+
