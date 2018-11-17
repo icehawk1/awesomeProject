@@ -16,3 +16,6 @@ func TestGenerateHash(t *testing.T) {
 	}
 }
 
+func TestCreateMerkleTree(t *testing.T) {
+
+}

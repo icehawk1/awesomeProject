@@ -23,9 +23,11 @@ func TestCanDetectChangeInOutput(t *testing.T)  {
 	input := txinput{from: &output}
 
 	SignInput(&input,key)
+
 	input.from = &txoutput{44000, key.PublicKey}
 
 	if CheckInput(input) {
 		t.Errorf("change of txoutput should have been detected")
 	}
+
 }

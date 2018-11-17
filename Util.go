@@ -17,6 +17,7 @@ func computeSha256(input string) []byte {
 
 type Hashable interface {
 	ComputeHash() string
+	ComputeHashByte() string
 }
 
 type MerkleTree struct {
@@ -39,20 +40,34 @@ func (self MerkleTree) ComputeHash() string {
 		rightHash = computeSha256Hex("")
 	}
 
-	return computeSha256Hex(fmt.Sprintf("%s%s", leftHash, rightHash))
+	// Prevent second preimage attack
+	if self.IsLeaf() {
+		return computeSha256Hex(fmt.Sprintf("00%s%s", leftHash, rightHash))
+	} else {
+		return computeSha256Hex(fmt.Sprintf("01%s%s", leftHash, rightHash))
+	}
 }
 
 func (self MerkleTree) IsLeaf() bool {
 	return self.left == nil && self.right == nil
 }
 
-func (self MerkleTree) PutIntoTree(tx *transaction) {
-	if self.left == nil {
-		self.left = &MerkleTree{value: tx}
-	} else if self.right == nil {
-		self.right = &MerkleTree{value: tx}
-	} else {
-		// TODO: Baum ordentlich balancieren
-		self.left.PutIntoTree(tx)
+func CreateMerkleTree(txlist []transaction) *MerkleTree {
+	var result []*MerkleTree
+	for _,tx := range txlist {
+		result = append(result, &MerkleTree{value:&tx})
 	}
+
+	for len(result)>1 {
+		var nextresult = make([]*MerkleTree, 0, len(result)+1)
+		for i:=0; i<len(result); i+=2 {
+			if (i+1)<len(result) {
+				nextresult = append(nextresult, &MerkleTree{left: result[i], right: result[i+1]})
+			} else {
+				nextresult = append(nextresult, &MerkleTree{left: result[i], right: nil})
+			}
+		}
+		result = nextresult
+	}
+	return result[0]
 }

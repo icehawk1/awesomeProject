@@ -20,7 +20,7 @@ type Block struct {
 
 type transaction struct {
 	Outputs []txoutput
-	inputs  []txinput
+	Inputs  []txinput
 }
 
 type txinput struct {
@@ -40,14 +40,14 @@ func CreateChain(msg string) Blockchain {
 
 func CreateBlock(msg string) Block {
 	result := Block{Payload: msg}
-	result.Hash = result.computeHash()
+	result.Hash = result.ComputeHash()
 	return result
 }
 
 func (self *Blockchain) Mine() {
 	blockheight, oldhead := self.ComputeBlockHeight()
 	newhead := Block{Payload: fmt.Sprintf("Block%d", blockheight+1), Prev: oldhead}
-	newhead.Hash = newhead.computeHash()
+	newhead.Hash = newhead.ComputeHash()
 
 	oldhead.Next = &newhead
 }
@@ -61,24 +61,57 @@ func (self *Blockchain) ComputeBlockHeight() (int, *Block) {
 	return i, current
 }
 
-// ------Private parts-----------------------------------------
-
 func (self *Block) ComputeHash() string {
-	input := fmt.Sprintf("%s%d",self.Payload,self.nonce)
+	return fmt.Sprintf("%X",self.ComputeHashByte())
+}
 
-	if self.Prev != nil {
-		return computeSha256Hex(input + self.Prev.Hash)
+func (self *Block) ComputeHashByte() []byte {
+	input := fmt.Sprintf("block%s%d", self.Payload, self.nonce)
+
+	if self != nil {
+		if self.Prev != nil {
+			return computeSha256(input + self.Prev.Hash)
+		} else {
+			return computeSha256(input)
+		}
 	} else {
-		return computeSha256Hex(input)
+		return computeSha256("")
 	}
 }
-func toArray(chain Blockchain) []Block {
-	var result []Block
-	current := &chain.Genesis
-	for ; current != nil; current = current.Next {
-		result = append(result, *current)
+
+func (self *transaction) ComputeHash() string {return fmt.Sprintf("%X",self.ComputeHashByte())}
+func (self *transaction) ComputeHashByte() []byte {
+	if self != nil {
+		hashinput := "tx"
+		for _,output := range self.Outputs {
+			hashinput += output.ComputeHash()
+		}
+		for _,input := range self.Inputs {
+			hashinput += input.ComputeHash()
+		}
+
+		return computeSha256(hashinput)
+	} else {
+		return computeSha256("")
 	}
-	return result
+}
+
+func (self *txinput) ComputeHash() string {return fmt.Sprintf("%X",self.ComputeHashByte())}
+func (self *txinput) ComputeHashByte() []byte {
+	if self != nil {
+		return computeSha256(fmt.Sprintf("input%X", self.sig.hash))
+	} else {
+		return computeSha256("")
+	}
+}
+
+func (self *txoutput) ComputeHash() string {return fmt.Sprintf("%X",self.ComputeHashByte())}
+func (self *txoutput) ComputeHashByte() []byte {
+	if self != nil {
+		return computeSha256(fmt.Sprintf("output%d%s", self.value, self.pubkey))
+	} else {
+		return computeSha256("")
+	}
 }
 
 func (self Blockchain) String() string {
