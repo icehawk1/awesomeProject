@@ -61,10 +61,33 @@ func (self *Blockchain) ComputeBlockHeight() (int, *Block) {
 	return i, current
 }
 
+func (self *transaction) Validate() bool {
+	sum_inputs := 0
+	for _,input := range self.Inputs {
+		sum_inputs += input.from.value
+	}
+
+	sum_outputs := 0
+	for _,output := range self.Outputs {
+		sum_outputs += output.value
+	}
+
+	if sum_outputs>sum_inputs {
+		return false
+	}
+
+	for _,input := range self.Inputs {
+		if !CheckInput(input) {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (self *Block) ComputeHash() string {
 	return fmt.Sprintf("%X",self.ComputeHashByte())
 }
-
 func (self *Block) ComputeHashByte() []byte {
 	input := fmt.Sprintf("block%s%d", self.Payload, self.nonce)
 
