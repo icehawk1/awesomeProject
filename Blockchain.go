@@ -12,7 +12,6 @@ type Blockchain struct {
 
 type Block struct {
 	Hash         string
-	Payload      string
 	Prev         *Block `json:"-"`
 	Next         *Block
 	nonce        int64
@@ -36,13 +35,13 @@ type txoutput struct {
 	pubkey ecdsa.PublicKey
 }
 
-func CreateChain(msg string) Blockchain {
-	result := Blockchain{Genesis: CreateBlock(msg)}
+func CreateChain() Blockchain {
+	result := Blockchain{Genesis: CreateBlock(make([]transaction,0))}
 	return result
 }
 
-func CreateBlock(msg string) Block {
-	result := Block{Payload: msg}
+func CreateBlock(txlist []transaction) Block {
+	result := Block{transactions:txlist}
 	result.Hash = result.ComputeHash()
 	return result
 }
@@ -58,8 +57,8 @@ func CreateTxOutput(value int, key ecdsa.PublicKey) txoutput {
 }
 
 func (self *Blockchain) Mine() {
-	blockheight, oldhead := self.ComputeBlockHeight()
-	newhead := Block{Payload: fmt.Sprintf("Block%d", blockheight+1), Prev: oldhead}
+	_, oldhead := self.ComputeBlockHeight()
+	newhead := Block{Prev: oldhead}
 	newhead.Hash = newhead.ComputeHash()
 
 	oldhead.Next = &newhead
@@ -78,7 +77,13 @@ type Validatable interface {
 	Validate() bool
 }
 
-func (self *transaction) Validate() bool {
+func (self Block) Validate() bool {
+	for _,tx := range self.transactions {
+		if !tx.Validate() {return false}
+	}
+	return true
+}
+func (self transaction) Validate() bool {
 	sum_inputs := 0
 	for _,input := range self.Inputs {
 		if !input.Validate() {return false}
@@ -99,11 +104,10 @@ func (self *transaction) Validate() bool {
 
 	return true
 }
-
-func (self *txinput) Validate() bool {
-	return self.from!=nil && CheckInputSignature(*self)
+func (self txinput) Validate() bool {
+	return self.from!=nil && CheckInputSignature(self)
 }
-func (self *txoutput) Validate() bool {
+func (self txoutput) Validate() bool {
 	return  self.value>=OUTPUT_MINVALUE && self.value<=OUTPUT_MAXVALUE
 }
 
@@ -111,9 +115,13 @@ func (self *Block) ComputeHash() string {
 	return fmt.Sprintf("%X",self.ComputeHashByte())
 }
 func (self *Block) ComputeHashByte() []byte {
-	input := fmt.Sprintf("block%s%d", self.Payload, self.nonce)
-
 	if self != nil {
+		input := fmt.Sprintf("block%d", self.nonce)
+
+		for i,tx := range self.transactions {
+			input += fmt.Sprintf("%d%X",i,tx.ComputeHashByte())
+		}
+
 		if self.Prev != nil {
 			return computeSha256(input + self.Prev.Hash)
 		} else {
@@ -163,9 +171,15 @@ func (self Blockchain) String() string {
 	return fmt.Sprintf("Chain Genesis: %s", self.Genesis)
 }
 func (self Block) String() string {
-	return fmt.Sprintf("Block(Hash='%s', msg='%s', Genesis=%t, head=%t)",
-		self.Hash, self.Payload, self.Prev == nil, self.Next == nil)
+	return fmt.Sprintf("Block(Hash='%s', Genesis=%t, head=%t)",
+		self.Hash, self.Prev == nil, self.Next == nil)
 }
 func (self transaction) String() string {
 	return fmt.Sprintf("Transaction[num_outputs=%d,num_inputs=%d]",len(self.Outputs),len(self.Inputs))
+}
+func (self txinput) String() string {
+	return fmt.Sprintf("Input[from=%s]",self.from)
+}
+func (self txoutput) String() string {
+	return fmt.Sprintf("Output[value=%d]",self.value)
 }

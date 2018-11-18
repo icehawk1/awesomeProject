@@ -22,10 +22,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestInitializeChain(t *testing.T) {
-	actual := CreateChain("my message")
-	if actual.Genesis.Payload != "my message" {
-		t.Errorf("Message didn't get through: %s",actual.Genesis.Payload)
-	}
+	actual := CreateChain()
 
 	if len(actual.Genesis.Hash) <=0 {
 		t.Errorf("Wrong Hash: %s",actual.Genesis.Hash)
@@ -37,7 +34,7 @@ func TestInitializeChain(t *testing.T) {
 }
 
 func TestMineTwoBlocks(t *testing.T) {
-	actual := CreateChain("andere nachricht")
+	actual := CreateChain()
 	actual.Mine()
 	actual.Mine()
 
