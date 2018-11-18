@@ -12,7 +12,7 @@ func TestCanVerifyValid(t *testing.T)  {
 
 	SignInput(&input,key)
 	assert.NotNil(t,input.sig.hash)
-	if !CheckInput(input) {
+	if !CheckInputSignature(input) {
 		t.Errorf("Illegal txoutput")
 	}
 }
@@ -26,7 +26,7 @@ func TestCanDetectChangeInOutput(t *testing.T)  {
 
 	input.from = &txoutput{44000, key.PublicKey}
 
-	if CheckInput(input) {
+	if CheckInputSignature(input) {
 		t.Errorf("change of txoutput should have been detected")
 	}
 

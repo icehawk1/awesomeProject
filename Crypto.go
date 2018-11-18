@@ -31,7 +31,7 @@ func SignInput(input *txinput, key ecdsa.PrivateKey) {
 	input.sig = Signature{r: *r, s: *s, hash:hash[:]}
 }
 
-func CheckInput(input txinput) bool {
+func CheckInputSignature(input txinput) bool {
 	valid := ecdsa.Verify(&input.from.pubkey, input.from.ComputeHashByte(), &input.sig.r, &input.sig.s)
 	return valid
 }

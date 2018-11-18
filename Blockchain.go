@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/ecdsa"
 	"fmt"
+	"math"
 )
 
 type Blockchain struct {
@@ -28,6 +29,8 @@ type txinput struct {
 	sig  Signature
 }
 
+const OUTPUT_MINVALUE = 0
+const OUTPUT_MAXVALUE = math.MaxInt32
 type txoutput struct {
 	value  int
 	pubkey ecdsa.PublicKey
@@ -42,6 +45,16 @@ func CreateBlock(msg string) Block {
 	result := Block{Payload: msg}
 	result.Hash = result.ComputeHash()
 	return result
+}
+
+func CreateTxInput(from *txoutput, key ecdsa.PrivateKey) txinput {
+	result := txinput{from:from}
+	SignInput(&result,key)
+	return result
+}
+
+func CreateTxOutput(value int, key ecdsa.PublicKey) txoutput {
+	return txoutput{value,key}
 }
 
 func (self *Blockchain) Mine() {
@@ -61,14 +74,20 @@ func (self *Blockchain) ComputeBlockHeight() (int, *Block) {
 	return i, current
 }
 
+type Validatable interface {
+	Validate() bool
+}
+
 func (self *transaction) Validate() bool {
 	sum_inputs := 0
 	for _,input := range self.Inputs {
+		if !input.Validate() {return false}
 		sum_inputs += input.from.value
 	}
 
 	sum_outputs := 0
 	for _,output := range self.Outputs {
+		if !output.Validate() {return false}
 		sum_outputs += output.value
 	}
 
@@ -76,13 +95,14 @@ func (self *transaction) Validate() bool {
 		return false
 	}
 
-	for _,input := range self.Inputs {
-		if !CheckInput(input) {
-			return false
-		}
-	}
-
 	return true
+}
+
+func (self *txinput) Validate() bool {
+	return self.from!=nil && CheckInputSignature(*self)
+}
+func (self *txoutput) Validate() bool {
+	return  self.value>=OUTPUT_MINVALUE && self.value<=OUTPUT_MAXVALUE
 }
 
 func (self *Block) ComputeHash() string {
@@ -143,4 +163,7 @@ func (self Blockchain) String() string {
 func (self Block) String() string {
 	return fmt.Sprintf("Block(Hash='%s', msg='%s', Genesis=%t, head=%t)",
 		self.Hash, self.Payload, self.Prev == nil, self.Next == nil)
+}
+func (self transaction) String() string {
+	return fmt.Sprintf("Transaction[num_outputs=%d,num_inputs=%d]",len(self.Outputs),len(self.Inputs))
 }
