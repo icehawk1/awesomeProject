@@ -1,21 +1,18 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
+	"github.com/gorilla/mux"
+	"log"
+	"net/http"
 )
 
 func main() {
-	chain := Blockchain{}
-	chain.Mine()
-	chain.Mine()
-	chain.Mine()
+	router := mux.NewRouter()
+	router.HandleFunc("/transactions", GetTransactions).Methods("GET")
+	log.Print(http.ListenAndServe(":8000", router))
+}
 
-	bytearr, _ := json.Marshal(chain)
-	encoded := fmt.Sprintf("%s",bytearr)
-	fmt.Println("chain: ",encoded)
-
-	var secondChain Blockchain
-	json.Unmarshal(bytearr, secondChain)
-	fmt.Println(secondChain)
+func GetTransactions(writer http.ResponseWriter, request *http.Request)  {
+	writer.WriteHeader(200)
+	writer.Write([]byte("Here are your transactions"))
 }

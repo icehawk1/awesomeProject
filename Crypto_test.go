@@ -5,6 +5,7 @@ import (
 	"testing"
 )
 
+
 func TestCanVerifyValid(t *testing.T)  {
 	key := CreateKeypair()
 	output := txoutput{44, key.PublicKey}
@@ -24,10 +25,16 @@ func TestCanDetectChangeInOutput(t *testing.T)  {
 
 	SignInput(&input,key)
 
-	input.from = &txoutput{44000, key.PublicKey}
+	input.from.value = 44000
 
 	if CheckInputSignature(input) {
 		t.Errorf("change of txoutput should have been detected")
+	}
+
+	input.from = &txoutput{44000, key.PublicKey}
+
+	if CheckInputSignature(input) {
+		t.Errorf("change of value should have been detected")
 	}
 
 }

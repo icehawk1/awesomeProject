@@ -103,3 +103,10 @@ func TestValidateTransactionInvalidInput(t *testing.T) {
 	tx := transaction{Outputs: outputlist,Inputs:inputlist}
 	assert.False(t,tx.Validate(),fmt.Sprintf("Transaction %s should NOT be valid",tx))
 }
+
+func TestValidateChain(t *testing.T) {
+	actual := CreateChain()
+	actual.Mine()
+	actual.Mine()
+	assert.True(t,actual.Validate(),"Chain should be valid")
+}
