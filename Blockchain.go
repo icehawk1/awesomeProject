@@ -95,6 +95,8 @@ func (self *transaction) Validate() bool {
 		return false
 	}
 
+	// TODO: Sobald ich einen full node implementiert habe, hier prüfen ob Inputs auf UTXOs verweisen
+
 	return true
 }
 
