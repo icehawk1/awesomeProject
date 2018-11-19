@@ -22,16 +22,16 @@ func CreateKeypair() ecdsa.PrivateKey {
 }
 
 func SignInput(input *txinput, key ecdsa.PrivateKey) {
-	//hash := sha256.Sum256([]byte(strconv.Itoa(input.from.value)))
-	hash := input.from.ComputeHashByte()
+	//hash := sha256.Sum256([]byte(strconv.Itoa(input.From.Value)))
+	hash := input.From.ComputeHashByte()
 	r, s, err := ecdsa.Sign(rand.Reader, &key, hash[:])
 	if err != nil {
 		panic(err)
 	}
-	input.sig = Signature{r: *r, s: *s, hash:hash[:]}
+	input.Sig = Signature{r: *r, s: *s, hash:hash[:]}
 }
 
 func CheckInputSignature(input txinput) bool {
-	valid := ecdsa.Verify(&input.from.pubkey, input.from.ComputeHashByte(), &input.sig.r, &input.sig.s)
+	valid := ecdsa.Verify(&input.From.Pubkey, input.From.ComputeHashByte(), &input.Sig.r, &input.Sig.s)
 	return valid
 }
