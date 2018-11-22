@@ -4,67 +4,77 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"math"
+	"strings"
 )
-
-type Blockchain struct {
-	Blocklist []Block
-}
 
 type Block struct {
 	Hash         string
+	prev         string
 	Nonce        int64
 	Transactions []Transaction
 }
 
 type Transaction struct {
-	Outputs []txoutput
-	Inputs  []txinput
+	Outputs []Txoutput
+	Inputs  []Txinput
 }
 
-type txinput struct {
-	From *txoutput
+type Txinput struct {
+	From *Txoutput
 	Sig  Signature
 }
 
 const OUTPUT_MINVALUE = 0
 const OUTPUT_MAXVALUE = math.MaxInt32
 
-type txoutput struct {
+type Txoutput struct {
 	Value  int
 	Pubkey ecdsa.PublicKey
 }
 
-func CreateChain() Blockchain {
-	result := Blockchain{[]Block{CreateBlock(make([]Transaction, 0))}}
-	return result
-}
-
 func CreateGenesisBlock() Block {
-	return CreateBlock(make([]Transaction,0))
+	return CreateBlock(make([]Transaction, 0), "")
 }
 
-func CreateBlock(txlist []Transaction) Block {
-	result := Block{Transactions: txlist}
-	result.Hash = result.ComputeHash(nil)
+func CreateBlock(txlist []Transaction, prevhash string) Block {
+	result := Block{Transactions: txlist, prev: prevhash}
+	result.Hash = result.ComputeHash()
 	return result
 }
 
-func CreateTxInput(from *txoutput, key ecdsa.PrivateKey) txinput {
-	result := txinput{From: from}
+func CreateTxInput(from *Txoutput, key ecdsa.PrivateKey) Txinput {
+	result := Txinput{From: from}
 	SignInput(&result, key)
 	return result
 }
 
-func CreateTxOutput(value int, key ecdsa.PublicKey) txoutput {
-	return txoutput{value, key}
+func CreateTxOutput(value int, key ecdsa.PublicKey) Txoutput {
+	return Txoutput{value, key}
 }
 
-func (self *Blockchain) Mine() {
-	self.Blocklist = append(self.Blocklist, CreateBlock(make([]Transaction, 0)))
+const Difficulty = 1
+
+func Mine(txlist []Transaction, prevhash string) Block {
+	requiredPrefix := strings.Repeat("0", Difficulty)
+
+	for {
+		newblock := CreateBlock(txlist, prevhash)
+		if strings.HasPrefix(newblock.Hash, requiredPrefix) {
+			return newblock
+		}
+	}
 }
 
-func (self *Blockchain) ComputeBlockHeight() int {
-	return len(self.Blocklist)
+func ComputeBlockHeight(head Block, knownBlocks *map[string]Block) int {
+	i := 0
+	var ok bool
+	for ; head.prev != ""; i++ {
+		head, ok = (*knownBlocks)[head.prev]
+		if (!ok) {
+			return -1
+		}
+	}
+	return i
 }
 
 func (self *Transaction) ComputePossibleFee() int {
@@ -85,10 +95,10 @@ func (self *Transaction) SumOutputs() int {
 	return result
 }
 
-func (self *Block) ComputeHash(prev *Block) string {
-	return fmt.Sprintf("%X", self.ComputeHashByte(prev))
+func (self *Block) ComputeHash() string {
+	return fmt.Sprintf("%X", self.ComputeHashByte())
 }
-func (self *Block) ComputeHashByte(prev *Block) []byte {
+func (self *Block) ComputeHashByte() []byte {
 	if self != nil {
 		input := fmt.Sprintf("block%d", self.Nonce)
 
@@ -96,11 +106,7 @@ func (self *Block) ComputeHashByte(prev *Block) []byte {
 			input += fmt.Sprintf("%d%X", i, tx.ComputeHashByte())
 		}
 
-		if prev != nil {
-			return computeSha256(input + prev.Hash)
-		} else {
-			return computeSha256(input)
-		}
+		return computeSha256(input + self.prev)
 	} else {
 		return computeSha256("")
 	}
@@ -123,8 +129,8 @@ func (self *Transaction) ComputeHashByte() []byte {
 	}
 }
 
-func (self *txinput) ComputeHash() string { return fmt.Sprintf("%X", self.ComputeHashByte()) }
-func (self *txinput) ComputeHashByte() []byte {
+func (self *Txinput) ComputeHash() string { return fmt.Sprintf("%X", self.ComputeHashByte()) }
+func (self *Txinput) ComputeHashByte() []byte {
 	if self != nil {
 		return computeSha256(fmt.Sprintf("input%X", self.Sig.hash))
 	} else {
@@ -132,8 +138,8 @@ func (self *txinput) ComputeHashByte() []byte {
 	}
 }
 
-func (self *txoutput) ComputeHash() string { return fmt.Sprintf("%X", self.ComputeHashByte()) }
-func (self *txoutput) ComputeHashByte() []byte {
+func (self *Txoutput) ComputeHash() string { return fmt.Sprintf("%X", self.ComputeHashByte()) }
+func (self *Txoutput) ComputeHashByte() []byte {
 	if self != nil {
 		return computeSha256(fmt.Sprintf("output%d%s", self.Value, self.Pubkey))
 	} else {
@@ -141,18 +147,15 @@ func (self *txoutput) ComputeHashByte() []byte {
 	}
 }
 
-func (self Blockchain) String() string {
-	return fmt.Sprintf("Chain Genesis: %s", self.Blocklist[0])
-}
 func (self Block) String() string {
 	return fmt.Sprintf("Block(Hash='%s',Nonce=%d)", self.Hash, self.Nonce)
 }
 func (self Transaction) String() string {
 	return fmt.Sprintf("Transaction[num_outputs=%d,num_inputs=%d]", len(self.Outputs), len(self.Inputs))
 }
-func (self txinput) String() string {
+func (self Txinput) String() string {
 	return fmt.Sprintf("Input[From=%s]", self.From)
 }
-func (self txoutput) String() string {
+func (self Txoutput) String() string {
 	return fmt.Sprintf("Output[Value=%d]", self.Value)
 }

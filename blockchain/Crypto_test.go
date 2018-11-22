@@ -8,30 +8,30 @@ import (
 
 func TestCanVerifyValid(t *testing.T)  {
 	key := CreateKeypair()
-	output := txoutput{44, key.PublicKey}
-	input := txinput{From: &output}
+	output := Txoutput{44, key.PublicKey}
+	input := Txinput{From: &output}
 
 	SignInput(&input,key)
 	assert.NotNil(t,input.Sig.hash)
 	if !CheckInputSignature(input) {
-		t.Errorf("Illegal txoutput")
+		t.Errorf("Illegal Txoutput")
 	}
 }
 
 func TestCanDetectChangeInOutput(t *testing.T)  {
 	key := CreateKeypair()
-	output := txoutput{44, key.PublicKey}
-	input := txinput{From: &output}
+	output := Txoutput{44, key.PublicKey}
+	input := Txinput{From: &output}
 
 	SignInput(&input,key)
 
 	input.From.Value = 44000
 
 	if CheckInputSignature(input) {
-		t.Errorf("change of txoutput should have been detected")
+		t.Errorf("change of Txoutput should have been detected")
 	}
 
-	input.From = &txoutput{44000, key.PublicKey}
+	input.From = &Txoutput{44000, key.PublicKey}
 
 	if CheckInputSignature(input) {
 		t.Errorf("change of Value should have been detected")

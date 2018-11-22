@@ -1,17 +1,9 @@
 package blockchain
 
+import "strings"
+
 type Validatable interface {
 	Validate() bool
-}
-
-func (self Blockchain) Validate() bool {
-	for _,current := range self.Blocklist {
-		if !current.Validate() {
-			return false
-		}
-	}
-
-	return true
 }
 
 const MAX_TRANSACTIONS_PER_BLOCK = 4096
@@ -26,6 +18,11 @@ func (self Block) Validate() bool {
 			return false
 		}
 	}
+
+	if !strings.HasPrefix(self.ComputeHash(), strings.Repeat("0", Difficulty)) {
+		return false
+	}
+
 	return true
 }
 
@@ -57,9 +54,9 @@ func (self Transaction) Validate() bool {
 
 	return true
 }
-func (self txinput) Validate() bool {
+func (self Txinput) Validate() bool {
 	return self.From != nil && CheckInputSignature(self)
 }
-func (self txoutput) Validate() bool {
+func (self Txoutput) Validate() bool {
 	return self.Value >= OUTPUT_MINVALUE && self.Value <= OUTPUT_MAXVALUE
 }

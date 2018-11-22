@@ -21,7 +21,7 @@ func CreateKeypair() ecdsa.PrivateKey {
 	return *result
 }
 
-func SignInput(input *txinput, key ecdsa.PrivateKey) {
+func SignInput(input *Txinput, key ecdsa.PrivateKey) {
 	//hash := sha256.Sum256([]byte(strconv.Itoa(input.From.Value)))
 	hash := input.From.ComputeHashByte()
 	r, s, err := ecdsa.Sign(rand.Reader, &key, hash[:])
@@ -31,7 +31,7 @@ func SignInput(input *txinput, key ecdsa.PrivateKey) {
 	input.Sig = Signature{r: *r, s: *s, hash:hash[:]}
 }
 
-func CheckInputSignature(input txinput) bool {
+func CheckInputSignature(input Txinput) bool {
 	valid := ecdsa.Verify(&input.From.Pubkey, input.From.ComputeHashByte(), &input.Sig.r, &input.Sig.s)
 	return valid
 }
