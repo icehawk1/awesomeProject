@@ -1,4 +1,4 @@
-package main
+package blockchain
 
 import (
 	"crypto/sha256"
@@ -23,7 +23,7 @@ type Hashable interface {
 type MerkleTree struct {
 	left  *MerkleTree
 	right *MerkleTree
-	value *transaction
+	value *Transaction
 }
 
 func (self MerkleTree) ComputeHash() string {
@@ -52,7 +52,7 @@ func (self MerkleTree) IsLeaf() bool {
 	return self.left == nil && self.right == nil
 }
 
-func CreateMerkleTree(txlist []transaction) *MerkleTree {
+func CreateMerkleTree(txlist []Transaction) *MerkleTree {
 	var result []*MerkleTree
 	for _,tx := range txlist {
 		result = append(result, &MerkleTree{value:&tx})
@@ -70,4 +70,18 @@ func CreateMerkleTree(txlist []transaction) *MerkleTree {
 		result = nextresult
 	}
 	return result[0]
+}
+
+func Max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func Min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }

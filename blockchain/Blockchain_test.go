@@ -1,4 +1,4 @@
-package main
+package blockchain
 
 import (
 	"crypto/ecdsa"
@@ -49,7 +49,7 @@ func TestValidateTransactionValid(t *testing.T) {
 		outputlist = append(outputlist, CreateTxOutput(value, CreateKeypair().PublicKey))
 	}
 
-	tx := transaction{Outputs: outputlist,Inputs:inputlist}
+	tx := Transaction{Outputs: outputlist,Inputs:inputlist}
 	assert.True(t,tx.Validate(),fmt.Sprintf("Transaction %s should be valid",tx))
 }
 
@@ -65,7 +65,7 @@ func TestValidateTransactionInvalidValue(t *testing.T) {
 		outputlist = append(outputlist, CreateTxOutput(value*2, CreateKeypair().PublicKey))
 	}
 
-	tx := transaction{Outputs: outputlist,Inputs:inputlist}
+	tx := Transaction{Outputs: outputlist,Inputs:inputlist}
 	assert.False(t,tx.Validate(),fmt.Sprintf("Transaction %s should NOT be valid",tx))
 }
 
@@ -82,7 +82,7 @@ func TestValidateTransactionInvalidInput(t *testing.T) {
 		outputlist = append(outputlist, CreateTxOutput(value, CreateKeypair().PublicKey))
 	}
 
-	tx := transaction{Outputs: outputlist,Inputs:inputlist}
+	tx := Transaction{Outputs: outputlist,Inputs:inputlist}
 	assert.False(t,tx.Validate(),fmt.Sprintf("Transaction %s should NOT be valid",tx))
 }
 
