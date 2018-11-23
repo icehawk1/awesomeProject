@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-// TODO: Store blocklist in Hash Map and use prev string
+// TODO: Store blocklist in ComputeHash Map and use prev string
 var currentHead = blockchain.CreateGenesisBlock()
 var blocklist = make(map[string]blockchain.Block)
 // I need those sorted by fee to always incorporate max fees into mined blocklist

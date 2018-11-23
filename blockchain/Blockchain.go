@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+	"awesomeProject/merkletree"
 	"crypto/ecdsa"
 	"fmt"
 	"math"
@@ -11,7 +12,7 @@ type Block struct {
 	Hash         string
 	prev         string
 	Nonce        int64
-	Transactions []Transaction
+	Transactions merkletree.MTree
 }
 
 type Transaction struct {
@@ -37,7 +38,8 @@ func CreateGenesisBlock() Block {
 }
 
 func CreateBlock(txlist []Transaction, prevhash string) Block {
-	result := Block{Transactions: txlist, prev: prevhash}
+	var tree merkletree.MTree = *merkletree.CreateMTree(ConvertTxToMerkable(txlist))
+	result := Block{Transactions: tree, prev: prevhash}
 	result.Hash = result.ComputeHash()
 	return result
 }
@@ -100,13 +102,8 @@ func (self *Block) ComputeHash() string {
 }
 func (self *Block) ComputeHashByte() []byte {
 	if self != nil {
-		input := fmt.Sprintf("block%d", self.Nonce)
-
-		for i, tx := range self.Transactions {
-			input += fmt.Sprintf("%d%X", i, tx.ComputeHashByte())
-		}
-
-		return computeSha256(input + self.prev)
+		input := fmt.Sprintf("block%d%X%s", self.Nonce, self.Transactions.RootHash, self.prev)
+		return computeSha256(input)
 	} else {
 		return computeSha256("")
 	}
@@ -128,6 +125,7 @@ func (self *Transaction) ComputeHashByte() []byte {
 		return computeSha256("")
 	}
 }
+func (self Transaction) Hash() []byte { return self.ComputeHashByte() }
 
 func (self *Txinput) ComputeHash() string { return fmt.Sprintf("%X", self.ComputeHashByte()) }
 func (self *Txinput) ComputeHashByte() []byte {
@@ -147,8 +145,19 @@ func (self *Txoutput) ComputeHashByte() []byte {
 	}
 }
 
+/* Since []Transaction does not implement []Merkables using
+ * Go, you have to do this converion manually
+ */
+func ConvertTxToMerkable(data []Transaction) []merkletree.Merkable{
+	merkables := make([]merkletree.Merkable, len(data))
+	for i, v := range data {
+		merkables[i] = merkletree.Merkable(v)
+	}
+	return merkables
+}
+
 func (self Block) String() string {
-	return fmt.Sprintf("Block(Hash='%s',Nonce=%d)", self.Hash, self.Nonce)
+	return fmt.Sprintf("Block(ComputeHash='%s',Nonce=%d)", self.Hash, self.Nonce)
 }
 func (self Transaction) String() string {
 	return fmt.Sprintf("Transaction[num_outputs=%d,num_inputs=%d]", len(self.Outputs), len(self.Inputs))

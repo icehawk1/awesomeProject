@@ -12,6 +12,7 @@ func CreatePeer(address string) Peer {
 	result := Peer{*parsed, 100}
 	return result
 }
+
 func (self Peer) Validate() bool {
 	if self.Address.Scheme != "http" && self.Address.Scheme != "https" {
 		return false
