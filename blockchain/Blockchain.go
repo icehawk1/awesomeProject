@@ -127,7 +127,7 @@ func (self *Transaction) ComputeHashByte() []byte {
 }
 func (self Transaction) CalculateHash() ([]byte, error) { return self.ComputeHashByte(), nil }
 func (self Transaction) Equals(other merkletree.Content) (bool, error) {
-	othertx, ok := other.(*Transaction)
+	othertx, ok := other.(Transaction)
 	if ok {
 		return self.ComputeHash() == othertx.ComputeHash(), nil
 	} else {

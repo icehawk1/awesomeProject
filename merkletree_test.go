@@ -7,48 +7,18 @@ import (
 	"testing"
 )
 
-type TestTransaction struct {
-	bla     string
-	Outputs []blockchain.Txoutput
-	Inputs  []blockchain.Txinput
-}
-
-//CalculateHash hashes the values of a TestContent
-func (self TestTransaction) CalculateHash() ([]byte, error) {
-	return self.ComputeHashByte(), nil
-}
-func (self *TestTransaction) ComputeHashByte() []byte {
-	if self != nil {
-		hashinput := "tx"
-		for _, output := range self.Outputs {
-			hashinput += output.ComputeHash()
-		}
-		for _, input := range self.Inputs {
-			hashinput += input.ComputeHash()
-		}
-
-		return blockchain.ComputeSha256(hashinput)
-	} else {
-		return blockchain.ComputeSha256("")
-	}
-}
-
-//Equals tests for equality of two Contents
-func (t TestTransaction) Equals(other merkletree.Content) (bool, error) {
-	othertx, ok := other.(TestTransaction)
-	if ok {
-		return t.bla == othertx.bla, nil
-	} else {
-		return false, nil
-	}
-}
-
 func TestGettingStarted(t *testing.T) {
+	key1 := blockchain.CreateKeypair()
+
 	var list []merkletree.Content
-	list = append(list, TestTransaction{bla: "Hello"})
-	list = append(list, TestTransaction{bla: "Hi"})
-	list = append(list, TestTransaction{bla: "Hey"})
-	list = append(list, TestTransaction{bla: "Hola"})
+	outputlist := []blockchain.Txoutput{blockchain.CreateTxOutput(0, key1.PublicKey)}
+	list = append(list, blockchain.Transaction{Outputs: outputlist})
+	outputlist = []blockchain.Txoutput{blockchain.CreateTxOutput(1, key1.PublicKey)}
+	list = append(list, blockchain.Transaction{Outputs: outputlist})
+	outputlist = []blockchain.Txoutput{blockchain.CreateTxOutput(2, key1.PublicKey)}
+	list = append(list, blockchain.Transaction{Outputs: outputlist})
+	outputlist = []blockchain.Txoutput{blockchain.CreateTxOutput(3, key1.PublicKey)}
+	list = append(list, blockchain.Transaction{Outputs: outputlist})
 
 	tree, err := merkletree.NewTree(list)
 	assert.NoError(t, err)
@@ -60,11 +30,15 @@ func TestGettingStarted(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, validtree)
 
+	equal, err := list[2].Equals(tree.Leafs[2].C)
+	assert.NoError(t,err)
+	assert.True(t, equal, "Equals function does not work")
+
 	isInTree, err := tree.VerifyContent(list[2])
 	assert.NoError(t, err)
-	assert.True(t, isInTree)
+	assert.True(t, isInTree, "Third element was not found")
 
-	isInTree, err = tree.VerifyContent(TestTransaction{bla: "Nihao"})
+	isInTree, err = tree.VerifyContent(blockchain.Transaction{})
 	assert.NoError(t, err)
 	assert.False(t, isInTree)
 }
