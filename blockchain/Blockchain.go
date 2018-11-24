@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"github.com/cbergoon/merkletree"
 	"math"
+	"math/rand"
 	"strings"
 )
 
 type Block struct {
 	Hash         string
 	prev         string
-	Nonce        int64
-	Transactions []Transaction
+	Nonce        uint64
+	Transactions merkletree.MerkleTree
 }
 
 type Transaction struct {
@@ -34,12 +35,24 @@ type Txoutput struct {
 }
 
 func CreateGenesisBlock() Block {
-	return CreateBlock(make([]Transaction, 0), "")
+	return Mine(make([]Transaction, 0), "")
 }
 
 func CreateBlock(txlist []Transaction, prevhash string) Block {
-	//tree, _ := merkletree.NewTree(nil)
-	result := Block{Transactions: nil, prev: prevhash}
+	var result Block
+	if len(txlist) > 0 {
+		contentlist := make([]merkletree.Content, len(txlist))
+		for i, elem := range txlist {
+			contentlist[i] = elem
+		}
+		if len(txlist)!=len(contentlist){panic("Something went horribly wrong")}
+
+		tree,_ := merkletree.NewTree(contentlist)
+		result = Block{Transactions: *tree, prev: prevhash, Nonce:rand.Uint64()}
+	} else {
+		result = Block{ prev: prevhash, Nonce:rand.Uint64()}
+	}
+
 	result.Hash = result.ComputeHash()
 	return result
 }
@@ -102,7 +115,14 @@ func (self *Block) ComputeHash() string {
 }
 func (self *Block) ComputeHashByte() []byte {
 	if self != nil {
-		input := fmt.Sprintf("block%d%X%s", self.Nonce, self.Transactions, self.prev)
+		var roothash []byte
+		if self.Transactions.Root != nil && self.Transactions.Root.Hash != nil {
+			roothash = self.Transactions.Root.Hash
+		} else {
+			roothash = ComputeSha256("")
+		}
+
+		input := fmt.Sprintf("block%d%X%s", self.Nonce, roothash, self.prev)
 		return ComputeSha256(input)
 	} else {
 		return ComputeSha256("")
@@ -164,12 +184,4 @@ func (self Txinput) String() string {
 }
 func (self Txoutput) String() string {
 	return fmt.Sprintf("Output[Value=%d]", self.Value)
-}
-
-func convertToTreenode(data []Transaction) []merkletree.Content {
-	merkables := make([]merkletree.Content, len(data))
-	for i, v := range data {
-		merkables[i] = merkletree.Content(v)
-	}
-	return merkables
 }

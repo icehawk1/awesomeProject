@@ -9,17 +9,17 @@ type Validatable interface {
 const MAX_TRANSACTIONS_PER_BLOCK = 4096
 
 func (self Block) Validate() bool {
-	/*if len(self.Transactions.Leafs) > MAX_TRANSACTIONS_PER_BLOCK {
+	if len(self.Transactions.Leafs) > MAX_TRANSACTIONS_PER_BLOCK {
 		return false
 	}
 
 	for _, node := range self.Transactions.Leafs {
-		tx,_ := node.C.(*Transaction)
+		tx,_ := node.C.(Transaction)
 		if !tx.Validate() {
 			return false
 		}
 	}
-*/
+
 	if !strings.HasPrefix(self.ComputeHash(), strings.Repeat("0", Difficulty)) {
 		return false
 	}
@@ -50,8 +50,6 @@ func (self Transaction) Validate() bool {
 	if self.SumOutputs() > self.SumInputs() {
 		return false
 	}
-
-	// TODO: Sobald ich einen full node implementiert habe, hier prüfen ob Inputs auf UTXOs verweisen
 
 	return true
 }
