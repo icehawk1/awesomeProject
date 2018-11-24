@@ -2,30 +2,10 @@ package main
 
 import (
 	"awesomeProject/blockchain"
-	"crypto/sha256"
 	"github.com/cbergoon/merkletree"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
-
-type TestContent struct {
-	x string
-}
-
-//CalculateHash hashes the values of a TestContent
-func (t TestContent) CalculateHash() ([]byte, error) {
-	h := sha256.New()
-	if _, err := h.Write([]byte(t.x)); err != nil {
-		return nil, err
-	}
-
-	return h.Sum(nil), nil
-}
-
-//Equals tests for equality of two Contents
-func (t TestContent) Equals(other merkletree.Content) (bool, error) {
-	return t.x == other.(TestContent).x, nil
-}
 
 type TestTransaction struct {
 	bla     string
@@ -34,13 +14,23 @@ type TestTransaction struct {
 }
 
 //CalculateHash hashes the values of a TestContent
-func (t TestTransaction) CalculateHash() ([]byte, error) {
-	h := sha256.New()
-	if _, err := h.Write([]byte(t.bla)); err != nil {
-		return nil, err
-	}
+func (self TestTransaction) CalculateHash() ([]byte, error) {
+	return self.ComputeHashByte(), nil
+}
+func (self *TestTransaction) ComputeHashByte() []byte {
+	if self != nil {
+		hashinput := "tx"
+		for _, output := range self.Outputs {
+			hashinput += output.ComputeHash()
+		}
+		for _, input := range self.Inputs {
+			hashinput += input.ComputeHash()
+		}
 
-	return h.Sum(nil), nil
+		return blockchain.ComputeSha256(hashinput)
+	} else {
+		return blockchain.ComputeSha256("")
+	}
 }
 
 //Equals tests for equality of two Contents
@@ -75,10 +65,6 @@ func TestGettingStarted(t *testing.T) {
 	assert.True(t, isInTree)
 
 	isInTree, err = tree.VerifyContent(TestTransaction{bla: "Nihao"})
-	assert.NoError(t, err)
-	assert.False(t, isInTree)
-
-	isInTree, err = tree.VerifyContent(TestContent{x: "Nihao"})
 	assert.NoError(t, err)
 	assert.False(t, isInTree)
 }

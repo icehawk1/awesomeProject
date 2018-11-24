@@ -1,9 +1,9 @@
 package blockchain
 
 import (
-	"awesomeProject/merkletree"
 	"crypto/ecdsa"
 	"fmt"
+	"github.com/cbergoon/merkletree"
 	"math"
 	"strings"
 )
@@ -12,7 +12,7 @@ type Block struct {
 	Hash         string
 	prev         string
 	Nonce        int64
-	Transactions merkletree.MTree
+	Transactions []Transaction
 }
 
 type Transaction struct {
@@ -38,8 +38,8 @@ func CreateGenesisBlock() Block {
 }
 
 func CreateBlock(txlist []Transaction, prevhash string) Block {
-	var tree merkletree.MTree = *merkletree.CreateMTree(ConvertTxToMerkable(txlist))
-	result := Block{Transactions: tree, prev: prevhash}
+	//tree, _ := merkletree.NewTree(nil)
+	result := Block{Transactions: nil, prev: prevhash}
 	result.Hash = result.ComputeHash()
 	return result
 }
@@ -102,10 +102,10 @@ func (self *Block) ComputeHash() string {
 }
 func (self *Block) ComputeHashByte() []byte {
 	if self != nil {
-		input := fmt.Sprintf("block%d%X%s", self.Nonce, self.Transactions.RootHash, self.prev)
-		return computeSha256(input)
+		input := fmt.Sprintf("block%d%X%s", self.Nonce, self.Transactions, self.prev)
+		return ComputeSha256(input)
 	} else {
-		return computeSha256("")
+		return ComputeSha256("")
 	}
 }
 
@@ -120,40 +120,37 @@ func (self *Transaction) ComputeHashByte() []byte {
 			hashinput += input.ComputeHash()
 		}
 
-		return computeSha256(hashinput)
+		return ComputeSha256(hashinput)
 	} else {
-		return computeSha256("")
+		return ComputeSha256("")
 	}
 }
-func (self Transaction) Hash() []byte { return self.ComputeHashByte() }
+func (self Transaction) CalculateHash() ([]byte, error) { return self.ComputeHashByte(), nil }
+func (self Transaction) Equals(other merkletree.Content) (bool, error) {
+	othertx, ok := other.(*Transaction)
+	if ok {
+		return self.ComputeHash() == othertx.ComputeHash(), nil
+	} else {
+		return false, nil
+	}
+}
 
 func (self *Txinput) ComputeHash() string { return fmt.Sprintf("%X", self.ComputeHashByte()) }
 func (self *Txinput) ComputeHashByte() []byte {
 	if self != nil {
-		return computeSha256(fmt.Sprintf("input%X", self.Sig.hash))
+		return ComputeSha256(fmt.Sprintf("input%X", self.Sig.hash))
 	} else {
-		return computeSha256("")
+		return ComputeSha256("")
 	}
 }
 
 func (self *Txoutput) ComputeHash() string { return fmt.Sprintf("%X", self.ComputeHashByte()) }
 func (self *Txoutput) ComputeHashByte() []byte {
 	if self != nil {
-		return computeSha256(fmt.Sprintf("output%d%s", self.Value, self.Pubkey))
+		return ComputeSha256(fmt.Sprintf("output%d%s", self.Value, self.Pubkey))
 	} else {
-		return computeSha256("")
+		return ComputeSha256("")
 	}
-}
-
-/* Since []Transaction does not implement []Merkables using
- * Go, you have to do this converion manually
- */
-func ConvertTxToMerkable(data []Transaction) []merkletree.Merkable{
-	merkables := make([]merkletree.Merkable, len(data))
-	for i, v := range data {
-		merkables[i] = merkletree.Merkable(v)
-	}
-	return merkables
 }
 
 func (self Block) String() string {
@@ -167,4 +164,12 @@ func (self Txinput) String() string {
 }
 func (self Txoutput) String() string {
 	return fmt.Sprintf("Output[Value=%d]", self.Value)
+}
+
+func convertToTreenode(data []Transaction) []merkletree.Content {
+	merkables := make([]merkletree.Content, len(data))
+	for i, v := range data {
+		merkables[i] = merkletree.Content(v)
+	}
+	return merkables
 }

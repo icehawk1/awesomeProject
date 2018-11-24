@@ -9,16 +9,17 @@ type Validatable interface {
 const MAX_TRANSACTIONS_PER_BLOCK = 4096
 
 func (self Block) Validate() bool {
-	if len(self.Transactions) > MAX_TRANSACTIONS_PER_BLOCK {
+	/*if len(self.Transactions.Leafs) > MAX_TRANSACTIONS_PER_BLOCK {
 		return false
 	}
 
-	for _, tx := range self.Transactions {
+	for _, node := range self.Transactions.Leafs {
+		tx,_ := node.C.(*Transaction)
 		if !tx.Validate() {
 			return false
 		}
 	}
-
+*/
 	if !strings.HasPrefix(self.ComputeHash(), strings.Repeat("0", Difficulty)) {
 		return false
 	}
