@@ -9,29 +9,45 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+	"regexp"
 	"time"
 )
 
 // TODO: Store blocklist in ComputeHash Map and use prev string
-var currentHead = blockchain.CreateGenesisBlock()
+var currentHead string
 var blocklist = make(map[string]blockchain.Block)
 // I need those sorted by fee to always incorporate max fees into mined blocklist
 var unclaimedTransactions = treeset.NewWith(compareTxByCollectableFee)
 var utxoList = make(map[string]blockchain.Txoutput)
 var LINE_FEED = []byte{0x0A}
+var REGEX_VALID_HASH = regexp.MustCompile(`[a-fA-F0-9]{32}`)
 
 var peerList = make([]networking.Peer, 0, 5)
 
 func main() {
+	var head blockchain.Block = blockchain.CreateGenesisBlock()
+	currentHead = head.ComputeHash()
+	blocklist[currentHead] = head
+
+	key1 := blockchain.CreateKeypair()
+	key2 := blockchain.CreateKeypair()
+	outputlist := []blockchain.Txoutput{blockchain.CreateTxOutput(0, key1.PublicKey), blockchain.CreateTxOutput(1, key2.PublicKey)}
+	inputlist := []blockchain.Txinput{blockchain.CreateTxInput(&outputlist[0], key1), blockchain.CreateTxInput(&outputlist[1], key2)}
+	transactions := []blockchain.Transaction{blockchain.Transaction{Outputs: outputlist, Inputs: inputlist}}
+	newblock := blockchain.Mine(transactions, currentHead)
+	blocklist[newblock.Hash] = newblock
+	currentHead = newblock.Hash
+
 	router := mux.NewRouter()
-	router.HandleFunc("/transaction", PostTransaction).Methods("POST")
+	router.HandleFunc("/pending_transaction", PostTransaction).Methods("POST")
+	router.HandleFunc("/pending_transaction", GetTransactions).Methods("GET")
 	router.HandleFunc("/peers", GetPeers).Methods("GET")
 	router.HandleFunc("/ping", GetPing).Methods("GET")
 
 	blockrouter := router.PathPrefix("/block").Subrouter().StrictSlash(true)
 	blockrouter.HandleFunc("/", GetAllBlocks).Methods("GET")
 	blockrouter.HandleFunc("/", PostBlock).Methods("POST")
-	blockrouter.HandleFunc("/{id:[0-9]+}", GetSpecificBlock).Methods("GET")
+	blockrouter.HandleFunc("/{hash:[a-fA-F0-9]+}", GetSpecificBlock).Methods("GET")
 
 	httpsrv := &http.Server{
 		Handler: router,
@@ -48,22 +64,52 @@ func main() {
 func PostTransaction(writer http.ResponseWriter, request *http.Request) {
 	var newtx *blockchain.Transaction
 	json.NewDecoder(request.Body).Decode(newtx)
-	if newtx != nil {
-
+	if newtx != nil && newtx.Validate() {
+		unclaimedTransactions.Add(newtx)
+	} else if newtx == nil {
+		writer.WriteHeader(400)
+		writer.Write([]byte(fmt.Sprintf("JSON is invalid\n")))
+	} else {
+		writer.WriteHeader(400)
+		writer.Write([]byte(fmt.Sprintf("Transaction %s is invalid\n", newtx.ComputeHash())))
 	}
 }
+
+func GetTransactions(writer http.ResponseWriter, request *http.Request) {
+	writeJson(unclaimedTransactions.Values(), writer)
+}
+
 func PostBlock(writer http.ResponseWriter, request *http.Request) {
 	var newblock *blockchain.Block
 	json.NewDecoder(request.Body).Decode(newblock)
-	log.Println(newblock)
-
 	if newblock != nil {
-		unclaimedTransactions.Remove(newblock.Transactions)
+		newblock.Hash = newblock.ComputeHash()
+		if !newblock.Validate() {
+			writer.WriteHeader(400)
+			writer.Write([]byte(fmt.Sprintf("Block %s is invalid\n", newblock.Hash)))
+			return
+		}
+
+		blocklist[newblock.Hash] = *newblock
+		if (blockchain.ComputeBlockHeight(*newblock, &blocklist) > blockchain.ComputeBlockHeight(blocklist[currentHead], &blocklist)) {
+			currentHead = newblock.ComputeHash()
+		}
+
+		if newblock != nil {
+			unclaimedTransactions.Remove(newblock.Transactions)
+		}
+	} else {
+		writer.WriteHeader(400)
+		writer.Write([]byte(fmt.Sprintf("JSON is invalid\n")))
 	}
 }
 
 func GetAllBlocks(writer http.ResponseWriter, request *http.Request) {
-	writeJson(blocklist, writer)
+	var result = make([]blockchain.Block, 0, len(blocklist))
+	for _, elem := range blocklist {
+		result = append(result, elem)
+	}
+	writeJson(result, writer)
 }
 func GetPeers(writer http.ResponseWriter, request *http.Request) {
 	writeJson(peerList, writer)
@@ -99,13 +145,8 @@ func compareTxByCollectableFee(a, b interface{}) int {
 }
 func writeJson(obj interface{}, writer http.ResponseWriter) {
 	bytearr, _ := json.Marshal(obj)
+	writer.Header().Set("Content-Type", "application/json")
 	writer.WriteHeader(200)
 	writer.Write(bytearr)
 	writer.Write(LINE_FEED)
-}
-func insertBlock(block blockchain.Block) {
-	blocklist[block.ComputeHash()] = block
-	if (blockchain.ComputeBlockHeight(block, &blocklist) > blockchain.ComputeBlockHeight(currentHead, &blocklist)) {
-		currentHead = block
-	}
 }

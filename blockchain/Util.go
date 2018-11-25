@@ -17,7 +17,7 @@ func ComputeSha256(input string) []byte {
 
 type Hashable interface {
 	ComputeHash() string
-	ComputeHashByte() string
+	ComputeHashByte() []byte
 }
 
 func Max(a, b int) int {

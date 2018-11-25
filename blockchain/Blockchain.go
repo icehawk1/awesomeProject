@@ -45,12 +45,14 @@ func CreateBlock(txlist []Transaction, prevhash string) Block {
 		for i, elem := range txlist {
 			contentlist[i] = elem
 		}
-		if len(txlist)!=len(contentlist){panic("Something went horribly wrong")}
+		if len(txlist) != len(contentlist) {
+			panic("Something went horribly wrong")
+		}
 
-		tree,_ := merkletree.NewTree(contentlist)
-		result = Block{Transactions: *tree, prev: prevhash, Nonce:rand.Uint64()}
+		tree, _ := merkletree.NewTree(contentlist)
+		result = Block{Transactions: *tree, prev: prevhash, Nonce: rand.Uint64()}
 	} else {
-		result = Block{ prev: prevhash, Nonce:rand.Uint64()}
+		result = Block{prev: prevhash, Nonce: rand.Uint64()}
 	}
 
 	result.Hash = result.ComputeHash()
@@ -91,25 +93,6 @@ func ComputeBlockHeight(head Block, knownBlocks *map[string]Block) int {
 	}
 	return i
 }
-
-func (self *Transaction) ComputePossibleFee() int {
-	return Max(0, self.SumOutputs()-self.SumInputs())
-}
-func (self *Transaction) SumInputs() int {
-	result := 0
-	for _, input := range self.Inputs {
-		result += input.From.Value
-	}
-	return result
-}
-func (self *Transaction) SumOutputs() int {
-	result := 0
-	for _, output := range self.Outputs {
-		result += output.Value
-	}
-	return result
-}
-
 func (self *Block) ComputeHash() string {
 	return fmt.Sprintf("%X", self.ComputeHashByte())
 }
@@ -129,6 +112,51 @@ func (self *Block) ComputeHashByte() []byte {
 	}
 }
 
+/**
+Unfortunately, the MerkleTree implementation I am using can only store an even number of leafs .
+So, if there are an odd number of transactions, it duplicates the last transaction. -.-
+This method removes the duplicated transaction
+ */
+func (self *Block) GetTransactions() []Transaction {
+	if self != nil {
+		leafs := self.Transactions.Leafs
+		duplicate, _ := leafs[len(leafs)-2].C.Equals(leafs[len(leafs)-1].C)
+		numtx := len(leafs)
+		if duplicate {
+			numtx--
+		}
+
+		result := make([]Transaction, 0, len(leafs))
+		for i:=0; i<numtx; i++ {
+			tx, ok := leafs[i].C.(Transaction)
+			if !ok {
+				panic("Tree contains something that is not a transaction")
+			}
+			result = append(result, tx)
+		}
+		return result
+	} else {
+		return []Transaction{}
+	}
+}
+
+func (self *Transaction) ComputePossibleFee() int {
+	return Max(0, self.SumOutputs()-self.SumInputs())
+}
+func (self *Transaction) SumInputs() int {
+	result := 0
+	for _, input := range self.Inputs {
+		result += input.From.Value
+	}
+	return result
+}
+func (self *Transaction) SumOutputs() int {
+	result := 0
+	for _, output := range self.Outputs {
+		result += output.Value
+	}
+	return result
+}
 func (self *Transaction) ComputeHash() string { return fmt.Sprintf("%X", self.ComputeHashByte()) }
 func (self *Transaction) ComputeHashByte() []byte {
 	if self != nil {

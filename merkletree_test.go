@@ -19,6 +19,8 @@ func TestGettingStarted(t *testing.T) {
 	list = append(list, blockchain.Transaction{Outputs: outputlist})
 	outputlist = []blockchain.Txoutput{blockchain.CreateTxOutput(3, key1.PublicKey)}
 	list = append(list, blockchain.Transaction{Outputs: outputlist})
+	outputlist = []blockchain.Txoutput{blockchain.CreateTxOutput(4, key1.PublicKey)}
+	list = append(list, blockchain.Transaction{Outputs: outputlist})
 
 	tree, err := merkletree.NewTree(list)
 	assert.NoError(t, err)
