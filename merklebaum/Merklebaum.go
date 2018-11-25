@@ -24,6 +24,10 @@ func (self Merklebaum) GetLeafes() []blockchain.Hashable {
 	return []blockchain.Hashable{}
 }
 
-func (self Merklebaum) CreateSpvProof(leaf blockchain.Hashable) []string {
-	return []string{}
+func (self Merklebaum) CreateSpvProof(leaf blockchain.Hashable) (proof []string, ok bool) {
+	return []string{},true
+}
+
+func (self Merklebaum) Contains(leaf blockchain.Hashable) bool {
+	return false
 }
