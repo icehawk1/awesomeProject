@@ -3,6 +3,7 @@ package merklebaum
 import (
 	"awesomeProject/blockchain"
 	"encoding/json"
+	"fmt"
 )
 
 type Merklebaum struct {
@@ -13,8 +14,12 @@ type Merklebaum struct {
 }
 
 func (self Merklebaum) ComputeHash() string {
+	return fmt.Sprintf("%X", self.ComputeHashByte())
+}
+
+func (self Merklebaum) ComputeHashByte() []byte {
 	if self.elem != nil {
-		return (*self.elem).ComputeHash()
+		return (*self.elem).ComputeHashByte()
 	} else {
 
 		// Prepend 0 to prevent second preimage attack
@@ -27,12 +32,8 @@ func (self Merklebaum) ComputeHash() string {
 			input += self.right.Hash
 		}
 
-		return blockchain.ComputeSha256Hex(input)
+		return blockchain.ComputeSha256(input)
 	}
-}
-
-func (self Merklebaum) ComputeHashByte() []byte {
-	panic("implement me")
 }
 
 func CreateMerklebaum(content []blockchain.Hashable) Merklebaum {
@@ -40,12 +41,12 @@ func CreateMerklebaum(content []blockchain.Hashable) Merklebaum {
 		return Merklebaum{}
 	}
 
-	var leafs = make([]blockchain.Hashable, 0, len(content))
+	var leafs = make([]*Merklebaum, 0, len(content))
 	for i := 0; i < len(content); i++ {
-		leafs = append(leafs, Merklebaum{Hash: content[i].ComputeHash(), elem: &content[i]})
+		leafs = append(leafs, &Merklebaum{Hash: content[i].ComputeHash(), elem: &content[i]})
 	}
 
-	var bäume = make([]*Merklebaum, 0, len(leafs))
+	var bäume = leafs
 	for len(bäume) > 1 {
 		bäume = createMerkleLevel(bäume)
 	}
@@ -70,7 +71,18 @@ func createMerkleLevel(bäume []*Merklebaum) []*Merklebaum {
 }
 
 func (self Merklebaum) IsValid() bool {
-	return false
+	// Nur Leafs dürfen Transaktionen halten
+	if self.elem != nil && !self.IsLeaf() {
+		return false
+	}
+	// Alle Leafs müssen eine Transaktion haben
+	if self.IsLeaf() && self.elem == nil {
+		return false
+	}
+
+	leftValid := self.left == nil || self.left.IsValid()
+	rightValid := self.right == nil || self.right.IsValid()
+	return leftValid && rightValid
 }
 
 func (self Merklebaum) IsLeaf() bool {

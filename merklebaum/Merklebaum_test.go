@@ -23,7 +23,7 @@ var contentlist = make([]blockchain.Hashable, 0, 10)
 var baum Merklebaum
 
 func TestMain(m *testing.M) {
-	for i := 0; i < len(contentlist); i++ {
+	for i := 0; i < cap(contentlist); i++ {
 		contentlist = append(contentlist, TestContent{fmt.Sprintf("Transaction %d", i)})
 	}
 	baum = CreateMerklebaum(contentlist)
