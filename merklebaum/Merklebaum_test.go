@@ -35,6 +35,10 @@ func TestIsValid(t *testing.T) {
 	assert.True(t, baum.IsValid())
 }
 
+func TestContains(t *testing.T) {
+	assert.True(t, baum.Contains(TestContent{"Transaction 7"}))
+}
+
 func TestHasNode_valid(t *testing.T) {
 	proof, ok := baum.CreateSpvProof(TestContent{"Transaction 3"})
 	assert.True(t, ok)

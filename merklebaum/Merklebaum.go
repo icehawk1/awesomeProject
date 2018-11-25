@@ -89,12 +89,12 @@ func (self Merklebaum) IsLeaf() bool {
 	return self.left == nil && self.right == nil
 }
 
-func (self Merklebaum) HasNode(path []string) bool {
-	return false
-}
-
 func (self Merklebaum) GetElements() []blockchain.Hashable {
 	return []blockchain.Hashable{}
+}
+
+func (self Merklebaum) HasNode(path []string) bool {
+	return false
 }
 
 func (self Merklebaum) CreateSpvProof(leaf blockchain.Hashable) (proof []string, ok bool) {
@@ -102,7 +102,11 @@ func (self Merklebaum) CreateSpvProof(leaf blockchain.Hashable) (proof []string,
 }
 
 func (self Merklebaum) Contains(leaf blockchain.Hashable) bool {
-	return false
+	if self.IsLeaf() {
+		return *self.elem == leaf
+	} else {
+		return self.left.Contains(leaf) || self.right.Contains(leaf)
+	}
 }
 
 func (self *Merklebaum) MarshalJSON() ([]byte, error) {
