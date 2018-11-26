@@ -16,3 +16,4 @@ Gopkg.lock
 .idea/
 >>>>>>> + Kann Inputs signieren
 vendor/
+exploring/
