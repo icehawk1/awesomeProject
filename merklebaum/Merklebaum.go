@@ -13,10 +13,12 @@ type Merklebaum struct {
 	elem  *blockchain.Hashable
 }
 
+func (self Merklebaum) Less(other Merklebaum) bool {
+	return self.Hash < other.Hash
+}
 func (self Merklebaum) ComputeHash() string {
 	return fmt.Sprintf("%X", self.ComputeHashByte())
 }
-
 func (self Merklebaum) ComputeHashByte() []byte {
 	if self.elem != nil {
 		return (*self.elem).ComputeHashByte()
@@ -54,7 +56,6 @@ func CreateMerklebaum(content []blockchain.Hashable) Merklebaum {
 	return *bäume[0]
 }
 func createMerkleLevel(bäume []*Merklebaum) []*Merklebaum {
-
 	var result = make([]*Merklebaum, 0, len(bäume)/2+1)
 
 	// In case of odd number of trees, skip last tree for later
@@ -65,8 +66,11 @@ func createMerkleLevel(bäume []*Merklebaum) []*Merklebaum {
 	}
 
 	if len(bäume)%2 == 1 {
-		result = append(result, &Merklebaum{left: bäume[len(bäume)-1]})
+		neuerbaum := &Merklebaum{left: bäume[len(bäume)-1]}
+		neuerbaum.Hash = neuerbaum.ComputeHash()
+		result = append(result, neuerbaum)
 	}
+
 	return result
 }
 
@@ -82,7 +86,7 @@ func (self Merklebaum) IsValid() bool {
 
 	leftValid := self.left == nil || self.left.IsValid()
 	rightValid := self.right == nil || self.right.IsValid()
-	return leftValid && rightValid
+	return leftValid && rightValid && self.Hash != ""
 }
 
 func (self Merklebaum) IsLeaf() bool {
@@ -90,15 +94,74 @@ func (self Merklebaum) IsLeaf() bool {
 }
 
 func (self Merklebaum) GetElements() []blockchain.Hashable {
-	return []blockchain.Hashable{}
+	return self.collectElements([]blockchain.Hashable{})
+}
+func (self Merklebaum) collectElements(collectedSoFar []blockchain.Hashable) []blockchain.Hashable {
+	if self.IsLeaf() {
+		return append(collectedSoFar, *self.elem)
+	} else {
+		if self.left != nil {
+			collectedSoFar = self.left.collectElements(collectedSoFar)
+		}
+
+		if self.right != nil {
+			collectedSoFar = self.right.collectElements(collectedSoFar)
+		}
+
+		return collectedSoFar
+	}
 }
 
 func (self Merklebaum) HasNode(path []string) bool {
-	return false
+	if len(path) == 0 {
+		return false
+	}
+
+	var current = &self
+	for i := 0; i < len(path)-1; i++ {
+		if current.Hash != path[i] {
+			return false
+		}
+		if current.left.Hash == path[i+1] {
+			current = current.left
+		}
+		if current.right.Hash == path[i+1] {
+			current = current.right
+		}
+	}
+
+	return current.Hash == path[len(path)-1]
 }
 
-func (self Merklebaum) CreateSpvProof(leaf blockchain.Hashable) (proof []string, ok bool) {
-	return []string{}, true
+func (self Merklebaum) CreateSpvProof(elem blockchain.Hashable) ([]string, bool) {
+	proof, found := self.findPath(elem.ComputeHash(), []string{})
+	if found {
+		return proof, true
+	} else {
+		return []string{}, true
+	}
+}
+func (self Merklebaum) findPath(elemhash string, path []string) ([]string, bool) {
+	if self.IsLeaf() {
+		return append(path, self.Hash), (*self.elem).ComputeHash() == elemhash
+	} else {
+		path = append(path, self.Hash)
+		if self.left != nil {
+			newpath, found := self.left.findPath(elemhash, path)
+			if found {
+				return newpath, true
+			}
+		}
+
+		if self.right != nil {
+			newpath, found := self.right.findPath(elemhash, path)
+			if found {
+				return newpath, true
+			}
+		}
+
+		return path, false
+	}
 }
 
 func (self Merklebaum) Contains(leaf blockchain.Hashable) bool {
@@ -109,10 +172,7 @@ func (self Merklebaum) Contains(leaf blockchain.Hashable) bool {
 	}
 }
 
-func (self *Merklebaum) MarshalJSON() ([]byte, error) {
-	return []byte(""), nil
-}
-
-func (self *Merklebaum) UnmarshalJSON(receivedData []byte) error {
-	return json.Unmarshal(receivedData, &self)
+func (self Merklebaum) toJson() ([]byte, error) {
+	elements := self.GetElements()
+	return json.Marshal(elements)
 }

@@ -2,6 +2,7 @@ package merklebaum
 
 import (
 	"awesomeProject/blockchain"
+	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"os"
@@ -9,14 +10,14 @@ import (
 )
 
 type TestContent struct {
-	text string
+	Text string
 }
 
 func (self TestContent) ComputeHash() string {
-	return blockchain.ComputeSha256Hex(self.text)
+	return blockchain.ComputeSha256Hex(self.Text)
 }
 func (self TestContent) ComputeHashByte() []byte {
-	return blockchain.ComputeSha256(self.text)
+	return blockchain.ComputeSha256(self.Text)
 }
 
 var contentlist = make([]blockchain.Hashable, 0, 10)
@@ -63,11 +64,29 @@ func TestCreateLevel(t *testing.T) {
 
 func TestCreateMerklebaum_oddlen(t *testing.T) {
 	actual := CreateMerklebaum(contentlist[:3])
-	assert.Equal(t, len(actual.GetElements()), 3)
+	assert.Equal(t, 3, len(actual.GetElements()))
 }
 
 func TestGetLeafes(t *testing.T) {
 	actual := baum.GetElements()
 	assert.Equal(t, len(actual), len(contentlist))
-	assert.Equal(t, actual[3].ComputeHash(), blockchain.ComputeSha256("Transaction 3"))
+	assert.Equal(t, blockchain.ComputeSha256Hex("Transaction 3"), actual[3].ComputeHash())
+}
+
+func TestConvertToJson(t *testing.T) {
+	encoded, error := baum.toJson()
+	assert.NoError(t,error)
+
+	var neueleafs []TestContent
+	error = json.Unmarshal(encoded,&neueleafs)
+	assert.NoError(t,error)
+
+	var tmp = make([]blockchain.Hashable,0,len(neueleafs))
+	for _,l := range neueleafs {
+		tmp = append(tmp, l)
+	}
+	neuerbaum := CreateMerklebaum(tmp)
+	
+	assert.Equal(t, baum.Hash, neuerbaum.Hash)
+	assert.Equal(t, baum.GetElements(),neuerbaum.GetElements())
 }
