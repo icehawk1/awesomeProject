@@ -9,9 +9,9 @@ import (
 
 type Merklebaum struct {
 	Hash  string
-	left  *Merklebaum
-	right *Merklebaum
-	elem  *Transaction
+	Left  *Merklebaum
+	Right *Merklebaum
+	Elem  *Transaction
 }
 
 func (self Merklebaum) Less(other Merklebaum) bool {
@@ -21,18 +21,18 @@ func (self Merklebaum) ComputeHash() string {
 	return fmt.Sprintf("%X", self.ComputeHashByte())
 }
 func (self Merklebaum) ComputeHashByte() []byte {
-	if self.elem != nil {
-		return (*self.elem).ComputeHashByte()
+	if self.Elem != nil {
+		return (*self.Elem).ComputeHashByte()
 	} else {
 
 		// Prepend 0 to prevent second preimage attack
 		input := "0"
-		if self.left != nil {
-			input += self.left.Hash
+		if self.Left != nil {
+			input += self.Left.Hash
 		}
 
-		if self.right != nil {
-			input += self.right.Hash
+		if self.Right != nil {
+			input += self.Right.Hash
 		}
 
 		return util.ComputeSha256(input)
@@ -46,7 +46,7 @@ func CreateMerklebaum(content []Transaction) Merklebaum {
 
 	var leafs = make([]*Merklebaum, 0, len(content))
 	for i := 0; i < len(content); i++ {
-		leafs = append(leafs, &Merklebaum{Hash: content[i].ComputeHash(), elem: &content[i]})
+		leafs = append(leafs, &Merklebaum{Hash: content[i].ComputeHash(), Elem: &content[i]})
 	}
 
 	var bäume = leafs
@@ -61,13 +61,13 @@ func createMerkleLevel(bäume []*Merklebaum) []*Merklebaum {
 
 	// In case of odd number of trees, skip last tree for later
 	for i := 0; i+1 < len(bäume); i += 2 {
-		neuerbaum := Merklebaum{left: bäume[i], right: bäume[i+1]}
+		neuerbaum := Merklebaum{Left: bäume[i], Right: bäume[i+1]}
 		neuerbaum.Hash = neuerbaum.ComputeHash()
 		result = append(result, &neuerbaum)
 	}
 
 	if len(bäume)%2 == 1 {
-		neuerbaum := &Merklebaum{left: bäume[len(bäume)-1]}
+		neuerbaum := &Merklebaum{Left: bäume[len(bäume)-1]}
 		neuerbaum.Hash = neuerbaum.ComputeHash()
 		result = append(result, neuerbaum)
 	}
@@ -77,21 +77,21 @@ func createMerkleLevel(bäume []*Merklebaum) []*Merklebaum {
 
 func (self Merklebaum) IsValid() bool {
 	// Nur Leafs dürfen Transaktionen halten
-	if self.elem != nil && !self.IsLeaf() {
+	if self.Elem != nil && !self.IsLeaf() {
 		return false
 	}
 	// Alle Leafs müssen eine Transaktion haben
-	if self.IsLeaf() && self.elem == nil {
+	if self.IsLeaf() && self.Elem == nil {
 		return false
 	}
 
-	leftValid := self.left == nil || self.left.IsValid()
-	rightValid := self.right == nil || self.right.IsValid()
+	leftValid := self.Left == nil || self.Left.IsValid()
+	rightValid := self.Right == nil || self.Right.IsValid()
 	return leftValid && rightValid && self.Hash != ""
 }
 
 func (self Merklebaum) IsLeaf() bool {
-	return self.left == nil && self.right == nil
+	return self.Left == nil && self.Right == nil
 }
 
 func (self Merklebaum) GetElements() []Transaction {
@@ -99,18 +99,18 @@ func (self Merklebaum) GetElements() []Transaction {
 }
 func (self Merklebaum) collectElements(collectedSoFar []Transaction) []Transaction {
 	if self.IsLeaf() {
-		if self.elem != nil {
-			return append(collectedSoFar, *self.elem)
+		if self.Elem != nil {
+			return append(collectedSoFar, *self.Elem)
 		} else {
 			return collectedSoFar
 		}
 	} else {
-		if self.left != nil {
-			collectedSoFar = self.left.collectElements(collectedSoFar)
+		if self.Left != nil {
+			collectedSoFar = self.Left.collectElements(collectedSoFar)
 		}
 
-		if self.right != nil {
-			collectedSoFar = self.right.collectElements(collectedSoFar)
+		if self.Right != nil {
+			collectedSoFar = self.Right.collectElements(collectedSoFar)
 		}
 
 		return collectedSoFar
@@ -127,10 +127,10 @@ func (self Merklebaum) HasNode(path []string) bool {
 		if current.Hash != path[i] {
 			return false
 		}
-		if current.left != nil && current.left.Hash == path[i+1] {
-			current = current.left
-		} else if current.right != nil && current.right.Hash == path[i+1] {
-			current = current.right
+		if current.Left != nil && current.Left.Hash == path[i+1] {
+			current = current.Left
+		} else if current.Right != nil && current.Right.Hash == path[i+1] {
+			current = current.Right
 		} else {
 			return false
 		}
@@ -149,18 +149,18 @@ func (self Merklebaum) CreateSpvProof(elem Transaction) ([]string, bool) {
 }
 func (self Merklebaum) findPath(elemhash string, path []string) ([]string, bool) {
 	if self.IsLeaf() {
-		return append(path, self.Hash), (*self.elem).ComputeHash() == elemhash
+		return append(path, self.Hash), (*self.Elem).ComputeHash() == elemhash
 	} else {
 		path = append(path, self.Hash)
-		if self.left != nil {
-			newpath, found := self.left.findPath(elemhash, path)
+		if self.Left != nil {
+			newpath, found := self.Left.findPath(elemhash, path)
 			if found {
 				return newpath, true
 			}
 		}
 
-		if self.right != nil {
-			newpath, found := self.right.findPath(elemhash, path)
+		if self.Right != nil {
+			newpath, found := self.Right.findPath(elemhash, path)
 			if found {
 				return newpath, true
 			}
@@ -172,9 +172,9 @@ func (self Merklebaum) findPath(elemhash string, path []string) ([]string, bool)
 
 func (self Merklebaum) Contains(leaf Transaction) bool {
 	if self.IsLeaf() {
-		return reflect.DeepEqual(*self.elem, leaf)
+		return reflect.DeepEqual(*self.Elem, leaf)
 	} else {
-		return self.left.Contains(leaf) || self.right.Contains(leaf)
+		return self.Left.Contains(leaf) || self.Right.Contains(leaf)
 	}
 }
 

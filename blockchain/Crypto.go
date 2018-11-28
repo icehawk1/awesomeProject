@@ -8,13 +8,14 @@ import (
 )
 
 type Signature struct {
-	r    big.Int
-	s    big.Int
-	hash []byte
+	R big.Int
+	S big.Int
 }
 
+var DefaultCurve = elliptic.P256()
+
 func CreateKeypair() ecdsa.PrivateKey {
-	result, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	result, err := ecdsa.GenerateKey(DefaultCurve, rand.Reader)
 	if err != nil {
 		panic(err)
 	}
@@ -28,10 +29,11 @@ func SignInput(input *Txinput, key ecdsa.PrivateKey) {
 	if err != nil {
 		panic(err)
 	}
-	input.Sig = Signature{r: *r, s: *s, hash:hash[:]}
+	input.Sig = Signature{R: *r, S: *s}
 }
 
 func CheckInputSignature(input Txinput) bool {
-	valid := ecdsa.Verify(&input.From.Pubkey, input.From.ComputeHashByte(), &input.Sig.r, &input.Sig.s)
+	x,y := elliptic.Unmarshal(DefaultCurve,input.From.Pubkey)
+	valid := ecdsa.Verify(&ecdsa.PublicKey{DefaultCurve,x,y}, input.From.ComputeHashByte(), &input.Sig.R, &input.Sig.S)
 	return valid
 }

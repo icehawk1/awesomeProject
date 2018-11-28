@@ -1,18 +1,17 @@
 package blockchain
 
 import (
-	"github.com/stretchr/testify/assert"
+	"crypto/elliptic"
 	"testing"
 )
 
 
 func TestCanVerifyValid(t *testing.T)  {
 	key := CreateKeypair()
-	output := Txoutput{44, key.PublicKey}
+	output := Txoutput{44, elliptic.Marshal(DefaultCurve, key.PublicKey.X, key.PublicKey.Y)}
 	input := Txinput{From: &output}
 
 	SignInput(&input,key)
-	assert.NotNil(t,input.Sig.hash)
 	if !CheckInputSignature(input) {
 		t.Errorf("Illegal Txoutput")
 	}
@@ -20,7 +19,7 @@ func TestCanVerifyValid(t *testing.T)  {
 
 func TestCanDetectChangeInOutput(t *testing.T)  {
 	key := CreateKeypair()
-	output := Txoutput{44, key.PublicKey}
+	output := Txoutput{44, elliptic.Marshal(DefaultCurve, key.PublicKey.X, key.PublicKey.Y)}
 	input := Txinput{From: &output}
 
 	SignInput(&input,key)
@@ -31,7 +30,7 @@ func TestCanDetectChangeInOutput(t *testing.T)  {
 		t.Errorf("change of Txoutput should have been detected")
 	}
 
-	input.From = &Txoutput{44000, key.PublicKey}
+	input.From = &Txoutput{44000, elliptic.Marshal(DefaultCurve, key.PublicKey.X, key.PublicKey.Y)}
 
 	if CheckInputSignature(input) {
 		t.Errorf("change of Value should have been detected")

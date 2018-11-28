@@ -3,6 +3,7 @@ package blockchain
 import (
 	"awesomeProject/util"
 	"crypto/ecdsa"
+	"crypto/elliptic"
 	"fmt"
 	"github.com/cbergoon/merkletree"
 	"math"
@@ -12,7 +13,7 @@ import (
 
 type Block struct {
 	Hash         string
-	prev         string
+	Prev         string
 	Nonce        uint64
 	Transactions Merklebaum
 }
@@ -33,7 +34,7 @@ const OUTPUT_MAXVALUE = math.MaxInt32
 
 type Txoutput struct {
 	Value  int
-	Pubkey ecdsa.PublicKey
+	Pubkey []byte
 }
 
 func CreateGenesisBlock() Block {
@@ -52,9 +53,9 @@ func CreateBlock(txlist []Transaction, prevhash string) Block {
 		}
 
 		tree := CreateMerklebaum(contentlist)
-		result = Block{Transactions: tree, prev: prevhash, Nonce: rand.Uint64()}
+		result = Block{Transactions: tree, Prev: prevhash, Nonce: rand.Uint64()}
 	} else {
-		result = Block{prev: prevhash, Nonce: rand.Uint64()}
+		result = Block{Prev: prevhash, Nonce: rand.Uint64()}
 	}
 
 	result.Hash = result.ComputeHash()
@@ -68,7 +69,7 @@ func CreateTxInput(from *Txoutput, key ecdsa.PrivateKey) Txinput {
 }
 
 func CreateTxOutput(value int, key ecdsa.PublicKey) Txoutput {
-	return Txoutput{value, key}
+	return Txoutput{value, elliptic.Marshal(DefaultCurve,key.X,key.Y)}
 }
 
 const Difficulty = 1
@@ -87,8 +88,8 @@ func Mine(txlist []Transaction, prevhash string) Block {
 func ComputeBlockHeight(head Block, knownBlocks *map[string]Block) int {
 	i := 0
 	var ok bool
-	for ; head.prev != ""; i++ {
-		head, ok = (*knownBlocks)[head.prev]
+	for ; head.Prev != ""; i++ {
+		head, ok = (*knownBlocks)[head.Prev]
 		if (!ok) {
 			return -1
 		}
@@ -107,7 +108,7 @@ func (self *Block) ComputeHashByte() []byte {
 			roothash = util.ComputeSha256Hex("")
 		}
 
-		input := fmt.Sprintf("block%d%s%s", self.Nonce, roothash, self.prev)
+		input := fmt.Sprintf("block%d%s%s", self.Nonce, roothash, self.Prev)
 		return util.ComputeSha256(input)
 	} else {
 		return util.ComputeSha256("")
@@ -169,7 +170,7 @@ func (self Transaction) Equals(other merkletree.Content) (bool, error) {
 
 func (self Txinput) ComputeHash() string { return fmt.Sprintf("%X", self.ComputeHashByte()) }
 func (self Txinput) ComputeHashByte() []byte {
-	return util.ComputeSha256(fmt.Sprintf("input%X", self.Sig.hash))
+	return util.ComputeSha256(fmt.Sprintf("input%X%X", self.Sig.R.Bytes(),self.Sig.S.Bytes()))
 }
 
 func (self Txoutput) ComputeHash() string { return fmt.Sprintf("%X", self.ComputeHashByte()) }
