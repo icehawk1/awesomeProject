@@ -1,4 +1,4 @@
-package merklebaum
+package blockchain
 
 import (
 	"awesomeProject/blockchain"
