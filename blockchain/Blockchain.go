@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+	"awesomeProject/util"
 	"crypto/ecdsa"
 	"fmt"
 	"github.com/cbergoon/merkletree"
@@ -103,13 +104,13 @@ func (self *Block) ComputeHashByte() []byte {
 		if self.Transactions.Hash != "" {
 			roothash = self.Transactions.Hash
 		} else {
-			roothash = ComputeSha256Hex("")
+			roothash = util.ComputeSha256Hex("")
 		}
 
 		input := fmt.Sprintf("block%d%s%s", self.Nonce, roothash, self.prev)
-		return ComputeSha256(input)
+		return util.ComputeSha256(input)
 	} else {
-		return ComputeSha256("")
+		return util.ComputeSha256("")
 	}
 }
 
@@ -127,7 +128,7 @@ func (self *Block) GetTransactions() []Transaction {
 }
 
 func (self *Transaction) ComputePossibleFee() int {
-	return Max(0, self.SumOutputs()-self.SumInputs())
+	return util.Max(0, self.SumOutputs()-self.SumInputs())
 }
 func (self *Transaction) SumInputs() int {
 	result := 0
@@ -145,7 +146,8 @@ func (self *Transaction) SumOutputs() int {
 }
 func (self Transaction) ComputeHash() string { return fmt.Sprintf("%X", self.ComputeHashByte()) }
 func (self Transaction) ComputeHashByte() []byte {
-	hashinput := "tx"
+	hashinput := "tx"+self.Message
+
 	for _, output := range self.Outputs {
 		hashinput += output.ComputeHash()
 	}
@@ -153,7 +155,7 @@ func (self Transaction) ComputeHashByte() []byte {
 		hashinput += input.ComputeHash()
 	}
 
-	return ComputeSha256(hashinput)
+	return util.ComputeSha256(hashinput)
 }
 func (self Transaction) CalculateHash() ([]byte, error) { return self.ComputeHashByte(), nil }
 func (self Transaction) Equals(other merkletree.Content) (bool, error) {
@@ -167,12 +169,12 @@ func (self Transaction) Equals(other merkletree.Content) (bool, error) {
 
 func (self Txinput) ComputeHash() string { return fmt.Sprintf("%X", self.ComputeHashByte()) }
 func (self Txinput) ComputeHashByte() []byte {
-	return ComputeSha256(fmt.Sprintf("input%X", self.Sig.hash))
+	return util.ComputeSha256(fmt.Sprintf("input%X", self.Sig.hash))
 }
 
 func (self Txoutput) ComputeHash() string { return fmt.Sprintf("%X", self.ComputeHashByte()) }
 func (self Txoutput) ComputeHashByte() []byte {
-	return ComputeSha256(fmt.Sprintf("output%d%s", self.Value, self.Pubkey))
+	return util.ComputeSha256(fmt.Sprintf("output%d%s", self.Value, self.Pubkey))
 }
 
 func (self Block) String() string {

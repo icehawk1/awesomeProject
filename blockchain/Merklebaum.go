@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+	"awesomeProject/util"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -34,7 +35,7 @@ func (self Merklebaum) ComputeHashByte() []byte {
 			input += self.right.Hash
 		}
 
-		return ComputeSha256(input)
+		return util.ComputeSha256(input)
 	}
 }
 
@@ -126,11 +127,12 @@ func (self Merklebaum) HasNode(path []string) bool {
 		if current.Hash != path[i] {
 			return false
 		}
-		if current.left.Hash == path[i+1] {
+		if current.left != nil && current.left.Hash == path[i+1] {
 			current = current.left
-		}
-		if current.right.Hash == path[i+1] {
+		} else if current.right != nil && current.right.Hash == path[i+1] {
 			current = current.right
+		} else {
+			return false
 		}
 	}
 
