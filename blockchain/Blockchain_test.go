@@ -68,7 +68,7 @@ func TestValidateTransactionInvalidInput(t *testing.T) {
 	tx := Transaction{Outputs: outputlist,Inputs:inputlist}
 	assert.False(t,tx.Validate(),fmt.Sprintf("Transaction %s should NOT be valid",tx))
 }
-
+/*
 func TestMine(t *testing.T) {
 	txlist := []Transaction{createTx(1,keylist[1]), createTx(3,keylist[1])}
 
@@ -78,7 +78,7 @@ func TestMine(t *testing.T) {
 	actual := Mine(txlist,genesis.ComputeHash())
 	assert.True(t, actual.Validate())
 }
-
+*/
 func createTx(value int, key ecdsa.PrivateKey) Transaction {
 	outputlist := []Txoutput{CreateTxOutput(value+0, key.PublicKey), CreateTxOutput(value+1, key.PublicKey)}
 	inputlist := []Txinput{CreateTxInput(&outputlist[0], key), CreateTxInput(&outputlist[1], key)}

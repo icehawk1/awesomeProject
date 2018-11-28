@@ -13,10 +13,11 @@ type Block struct {
 	Hash         string
 	prev         string
 	Nonce        uint64
-	Transactions merkletree.MerkleTree
+	Transactions Merklebaum
 }
 
 type Transaction struct {
+	Message string
 	Outputs []Txoutput
 	Inputs  []Txinput
 }
@@ -41,7 +42,7 @@ func CreateGenesisBlock() Block {
 func CreateBlock(txlist []Transaction, prevhash string) Block {
 	var result Block
 	if len(txlist) > 0 {
-		contentlist := make([]merkletree.Content, len(txlist))
+		contentlist := make([]Transaction, len(txlist))
 		for i, elem := range txlist {
 			contentlist[i] = elem
 		}
@@ -49,8 +50,8 @@ func CreateBlock(txlist []Transaction, prevhash string) Block {
 			panic("Something went horribly wrong")
 		}
 
-		tree, _ := merkletree.NewTree(contentlist)
-		result = Block{Transactions: *tree, prev: prevhash, Nonce: rand.Uint64()}
+		tree := CreateMerklebaum(contentlist)
+		result = Block{Transactions: tree, prev: prevhash, Nonce: rand.Uint64()}
 	} else {
 		result = Block{prev: prevhash, Nonce: rand.Uint64()}
 	}
@@ -98,14 +99,14 @@ func (self *Block) ComputeHash() string {
 }
 func (self *Block) ComputeHashByte() []byte {
 	if self != nil {
-		var roothash []byte
-		if self.Transactions.Root != nil && self.Transactions.Root.Hash != nil {
-			roothash = self.Transactions.Root.Hash
+		var roothash string
+		if self.Transactions.Hash != "" {
+			roothash = self.Transactions.Hash
 		} else {
-			roothash = ComputeSha256("")
+			roothash = ComputeSha256Hex("")
 		}
 
-		input := fmt.Sprintf("block%d%X%s", self.Nonce, roothash, self.prev)
+		input := fmt.Sprintf("block%d%s%s", self.Nonce, roothash, self.prev)
 		return ComputeSha256(input)
 	} else {
 		return ComputeSha256("")
@@ -119,22 +120,7 @@ This method removes the duplicated transaction
  */
 func (self *Block) GetTransactions() []Transaction {
 	if self != nil {
-		leafs := self.Transactions.Leafs
-		duplicate, _ := leafs[len(leafs)-2].C.Equals(leafs[len(leafs)-1].C)
-		numtx := len(leafs)
-		if duplicate {
-			numtx--
-		}
-
-		result := make([]Transaction, 0, len(leafs))
-		for i:=0; i<numtx; i++ {
-			tx, ok := leafs[i].C.(Transaction)
-			if !ok {
-				panic("Tree contains something that is not a transaction")
-			}
-			result = append(result, tx)
-		}
-		return result
+		return self.Transactions.GetElements()
 	} else {
 		return []Transaction{}
 	}
@@ -157,21 +143,17 @@ func (self *Transaction) SumOutputs() int {
 	}
 	return result
 }
-func (self *Transaction) ComputeHash() string { return fmt.Sprintf("%X", self.ComputeHashByte()) }
-func (self *Transaction) ComputeHashByte() []byte {
-	if self != nil {
-		hashinput := "tx"
-		for _, output := range self.Outputs {
-			hashinput += output.ComputeHash()
-		}
-		for _, input := range self.Inputs {
-			hashinput += input.ComputeHash()
-		}
-
-		return ComputeSha256(hashinput)
-	} else {
-		return ComputeSha256("")
+func (self Transaction) ComputeHash() string { return fmt.Sprintf("%X", self.ComputeHashByte()) }
+func (self Transaction) ComputeHashByte() []byte {
+	hashinput := "tx"
+	for _, output := range self.Outputs {
+		hashinput += output.ComputeHash()
 	}
+	for _, input := range self.Inputs {
+		hashinput += input.ComputeHash()
+	}
+
+	return ComputeSha256(hashinput)
 }
 func (self Transaction) CalculateHash() ([]byte, error) { return self.ComputeHashByte(), nil }
 func (self Transaction) Equals(other merkletree.Content) (bool, error) {
@@ -183,22 +165,14 @@ func (self Transaction) Equals(other merkletree.Content) (bool, error) {
 	}
 }
 
-func (self *Txinput) ComputeHash() string { return fmt.Sprintf("%X", self.ComputeHashByte()) }
-func (self *Txinput) ComputeHashByte() []byte {
-	if self != nil {
-		return ComputeSha256(fmt.Sprintf("input%X", self.Sig.hash))
-	} else {
-		return ComputeSha256("")
-	}
+func (self Txinput) ComputeHash() string { return fmt.Sprintf("%X", self.ComputeHashByte()) }
+func (self Txinput) ComputeHashByte() []byte {
+	return ComputeSha256(fmt.Sprintf("input%X", self.Sig.hash))
 }
 
-func (self *Txoutput) ComputeHash() string { return fmt.Sprintf("%X", self.ComputeHashByte()) }
-func (self *Txoutput) ComputeHashByte() []byte {
-	if self != nil {
-		return ComputeSha256(fmt.Sprintf("output%d%s", self.Value, self.Pubkey))
-	} else {
-		return ComputeSha256("")
-	}
+func (self Txoutput) ComputeHash() string { return fmt.Sprintf("%X", self.ComputeHashByte()) }
+func (self Txoutput) ComputeHashByte() []byte {
+	return ComputeSha256(fmt.Sprintf("output%d%s", self.Value, self.Pubkey))
 }
 
 func (self Block) String() string {

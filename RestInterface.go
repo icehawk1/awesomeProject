@@ -51,7 +51,7 @@ func main() {
 
 	httpsrv := &http.Server{
 		Handler: router,
-		Addr:    "0.0.0.0:8000",
+		Addr:    "127.0.0.1:8000",
 		// Good practice: enforce timeouts for servers you create!
 		WriteTimeout: 25 * time.Second,
 		ReadTimeout:  25 * time.Second,
