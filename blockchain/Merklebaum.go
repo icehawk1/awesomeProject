@@ -1,16 +1,16 @@
-package merklebaum
+package blockchain
 
 import (
-	"awesomeProject/blockchain"
 	"encoding/json"
 	"fmt"
+	"reflect"
 )
 
 type Merklebaum struct {
 	Hash  string
 	left  *Merklebaum
 	right *Merklebaum
-	elem  *blockchain.Hashable
+	elem  *Transaction
 }
 
 func (self Merklebaum) Less(other Merklebaum) bool {
@@ -34,11 +34,11 @@ func (self Merklebaum) ComputeHashByte() []byte {
 			input += self.right.Hash
 		}
 
-		return blockchain.ComputeSha256(input)
+		return ComputeSha256(input)
 	}
 }
 
-func CreateMerklebaum(content []blockchain.Hashable) Merklebaum {
+func CreateMerklebaum(content []Transaction) Merklebaum {
 	if len(content) == 0 {
 		return Merklebaum{}
 	}
@@ -93,12 +93,16 @@ func (self Merklebaum) IsLeaf() bool {
 	return self.left == nil && self.right == nil
 }
 
-func (self Merklebaum) GetElements() []blockchain.Hashable {
-	return self.collectElements([]blockchain.Hashable{})
+func (self Merklebaum) GetElements() []Transaction {
+	return self.collectElements([]Transaction{})
 }
-func (self Merklebaum) collectElements(collectedSoFar []blockchain.Hashable) []blockchain.Hashable {
+func (self Merklebaum) collectElements(collectedSoFar []Transaction) []Transaction {
 	if self.IsLeaf() {
-		return append(collectedSoFar, *self.elem)
+		if self.elem != nil {
+			return append(collectedSoFar, *self.elem)
+		} else {
+			return collectedSoFar
+		}
 	} else {
 		if self.left != nil {
 			collectedSoFar = self.left.collectElements(collectedSoFar)
@@ -133,7 +137,7 @@ func (self Merklebaum) HasNode(path []string) bool {
 	return current.Hash == path[len(path)-1]
 }
 
-func (self Merklebaum) CreateSpvProof(elem blockchain.Hashable) ([]string, bool) {
+func (self Merklebaum) CreateSpvProof(elem Transaction) ([]string, bool) {
 	proof, found := self.findPath(elem.ComputeHash(), []string{})
 	if found {
 		return proof, true
@@ -164,9 +168,9 @@ func (self Merklebaum) findPath(elemhash string, path []string) ([]string, bool)
 	}
 }
 
-func (self Merklebaum) Contains(leaf blockchain.Hashable) bool {
+func (self Merklebaum) Contains(leaf Transaction) bool {
 	if self.IsLeaf() {
-		return *self.elem == leaf
+		return reflect.DeepEqual(*self.elem, leaf)
 	} else {
 		return self.left.Contains(leaf) || self.right.Contains(leaf)
 	}
