@@ -15,6 +15,9 @@ import (
 
 // The head of the currently longest chain
 var currentHead string
+// The first block in the chain
+var genesis string
+
 // All known valid blocks: Blockhash -> Block
 var blocklist = make(map[string]blockchain.Block)
 // I need those sorted by fee to always incorporate max fees into mined blocklist
@@ -28,7 +31,8 @@ var peerList = make([]networking.Peer, 0, 5)
 
 func main() {
 	var head = blockchain.CreateGenesisBlock()
-	currentHead = head.ComputeHash()
+	genesis = head.ComputeHash()
+	currentHead = genesis
 	blocklist[currentHead] = head
 
 	key1 := blockchain.CreateKeypair()
@@ -49,8 +53,8 @@ func main() {
 	blockrouter := router.PathPrefix("/block").Subrouter().StrictSlash(true)
 	blockrouter.HandleFunc("/", GetAllBlocks).Methods("GET")
 	blockrouter.HandleFunc("/", PostBlock).Methods("POST")
+	blockrouter.HandleFunc("/genesis", GetGenesisBlock).Methods("GET")
 	blockrouter.HandleFunc("/{hash:[a-fA-F0-9]+}", GetSpecificBlock).Methods("GET")
-	blockrouter.HandleFunc("/{num:[0-9]+}", GetSpecificBlock).Methods("GET")
 
 	httpsrv := &http.Server{
 		Handler: router,
@@ -63,6 +67,9 @@ func main() {
 	httpsrv.ListenAndServe()
 	log.Println("Listening for connections")
 }
+func GetGenesisBlock(writer http.ResponseWriter, request *http.Request) {
+	writeJson(blocklist[genesis],writer)
+}
 
 func PostTransaction(writer http.ResponseWriter, request *http.Request) {
 	var newtx *blockchain.Transaction
@@ -71,7 +78,7 @@ func PostTransaction(writer http.ResponseWriter, request *http.Request) {
 		unclaimedTransactions.Add(newtx)
 	} else if newtx == nil {
 		writer.WriteHeader(400)
-		writer.Write([]byte(fmt.Sprintf("JSON is invalid: \n",error)))
+		writer.Write([]byte(fmt.Sprintf("JSON is invalid: %s\n",error)))
 	} else {
 		writer.WriteHeader(400)
 		writer.Write([]byte(fmt.Sprintf("Transaction %s is invalid\n", newtx.ComputeHash())))
@@ -117,7 +124,7 @@ func GetAllBlocks(writer http.ResponseWriter, request *http.Request) {
 func GetPeers(writer http.ResponseWriter, request *http.Request) {
 	writeJson(peerList, writer)
 }
-func GetSpecificBlock(writer http.ResponseWriter, request *http.Request) {
+func GetSpecificBlock(writer http.ResponseWriter, request *http.Request)  {
 	blockhash, _ := mux.Vars(request)["hash"]
 	block, ok := blocklist[blockhash]
 	if (ok) {
