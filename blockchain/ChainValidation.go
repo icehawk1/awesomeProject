@@ -1,6 +1,9 @@
 package blockchain
 
-import "strings"
+import (
+	"reflect"
+	"strings"
+)
 
 type Validatable interface {
 	Validate() bool
@@ -37,6 +40,11 @@ func (self Transaction) Validate() bool {
 	for _, input := range self.Inputs {
 		if !input.Validate() {
 			return false
+		}
+
+		// Do not accept self referencing
+		for _, output := range self.Inputs {
+			if reflect.DeepEqual(input.From,output) {return false}
 		}
 	}
 

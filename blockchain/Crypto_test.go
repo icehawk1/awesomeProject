@@ -35,5 +35,4 @@ func TestCanDetectChangeInOutput(t *testing.T)  {
 	if CheckInputSignature(input) {
 		t.Errorf("change of Value should have been detected")
 	}
-
 }

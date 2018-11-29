@@ -13,11 +13,13 @@ import (
 	"time"
 )
 
-// TODO: Store blocklist in ComputeHash Map and use prev string
+// The head of the currently longest chain
 var currentHead string
+// All known valid blocks: Blockhash -> Block
 var blocklist = make(map[string]blockchain.Block)
 // I need those sorted by fee to always incorporate max fees into mined blocklist
 var unclaimedTransactions = treeset.NewWith(compareTxByCollectableFee)
+// Hash -> UTXO
 var utxoList = make(map[string]blockchain.Txoutput)
 var LINE_FEED = []byte{0x0A}
 var REGEX_VALID_HASH = regexp.MustCompile(`[a-fA-F0-9]{32}`)
@@ -25,7 +27,7 @@ var REGEX_VALID_HASH = regexp.MustCompile(`[a-fA-F0-9]{32}`)
 var peerList = make([]networking.Peer, 0, 5)
 
 func main() {
-	var head blockchain.Block = blockchain.CreateGenesisBlock()
+	var head = blockchain.CreateGenesisBlock()
 	currentHead = head.ComputeHash()
 	blocklist[currentHead] = head
 
