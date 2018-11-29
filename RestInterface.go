@@ -50,6 +50,7 @@ func main() {
 	blockrouter.HandleFunc("/", GetAllBlocks).Methods("GET")
 	blockrouter.HandleFunc("/", PostBlock).Methods("POST")
 	blockrouter.HandleFunc("/{hash:[a-fA-F0-9]+}", GetSpecificBlock).Methods("GET")
+	blockrouter.HandleFunc("/{num:[0-9]+}", GetSpecificBlock).Methods("GET")
 
 	httpsrv := &http.Server{
 		Handler: router,
@@ -65,12 +66,12 @@ func main() {
 
 func PostTransaction(writer http.ResponseWriter, request *http.Request) {
 	var newtx *blockchain.Transaction
-	json.NewDecoder(request.Body).Decode(newtx)
+	error := json.NewDecoder(request.Body).Decode(&newtx)
 	if newtx != nil && newtx.Validate() {
 		unclaimedTransactions.Add(newtx)
 	} else if newtx == nil {
 		writer.WriteHeader(400)
-		writer.Write([]byte(fmt.Sprintf("JSON is invalid\n")))
+		writer.Write([]byte(fmt.Sprintf("JSON is invalid: \n",error)))
 	} else {
 		writer.WriteHeader(400)
 		writer.Write([]byte(fmt.Sprintf("Transaction %s is invalid\n", newtx.ComputeHash())))
@@ -83,7 +84,7 @@ func GetTransactions(writer http.ResponseWriter, request *http.Request) {
 
 func PostBlock(writer http.ResponseWriter, request *http.Request) {
 	var newblock *blockchain.Block
-	json.NewDecoder(request.Body).Decode(newblock)
+	json.NewDecoder(request.Body).Decode(&newblock)
 	if newblock != nil {
 		newblock.Hash = newblock.ComputeHash()
 		if !newblock.Validate() {

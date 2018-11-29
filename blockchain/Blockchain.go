@@ -9,6 +9,7 @@ import (
 	"math"
 	"math/rand"
 	"strings"
+	"time"
 )
 
 type Block struct {
@@ -37,6 +38,8 @@ type Txoutput struct {
 	Pubkey []byte
 }
 
+var prng = rand.New(rand.NewSource(time.Now().UnixNano()))
+
 func CreateGenesisBlock() Block {
 	return Mine(make([]Transaction, 0), "")
 }
@@ -53,9 +56,9 @@ func CreateBlock(txlist []Transaction, prevhash string) Block {
 		}
 
 		tree := CreateMerklebaum(contentlist)
-		result = Block{Transactions: tree, Prev: prevhash, Nonce: rand.Uint64()}
+		result = Block{Transactions: tree, Prev: prevhash, Nonce: prng.Uint64()}
 	} else {
-		result = Block{Prev: prevhash, Nonce: rand.Uint64()}
+		result = Block{Prev: prevhash, Nonce: prng.Uint64()}
 	}
 
 	result.Hash = result.ComputeHash()

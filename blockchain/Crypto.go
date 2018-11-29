@@ -19,6 +19,7 @@ func CreateKeypair() ecdsa.PrivateKey {
 	if err != nil {
 		panic(err)
 	}
+
 	return *result
 }
 
