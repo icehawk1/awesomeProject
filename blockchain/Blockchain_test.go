@@ -12,6 +12,17 @@ import (
 var utxoList = make([]Txoutput, 0, 20)
 var keylist = make([]ecdsa.PrivateKey, 0, 20)
 
+func TestAddFees(t *testing.T) {
+	txlist := []Transaction{createTxWithUnclaimedFee(10,1,keylist[0]), createTxWithUnclaimedFee(10,1,keylist[0])}
+	txlist = ClaimFees(txlist, keylist[1])
+	assert.Equal(t, 0, ComputePossibleFee(txlist))
+}
+
+func TestComputePossibleFee(t *testing.T) {
+	txlist := []Transaction{createTxWithUnclaimedFee(10,1,keylist[0]), createTxWithUnclaimedFee(10,1,keylist[0])}
+	assert.Equal(t, 2, ComputePossibleFee(txlist))
+}
+
 func TestValidateTransactionValid(t *testing.T) {
 	inputlist := make([]Txinput, 0, 10)
 	for i := 0; i < cap(inputlist); i++ {
@@ -102,6 +113,12 @@ func TestParseJsonTx(t *testing.T) {
 }
 
 func createTx(value int, key ecdsa.PrivateKey) Transaction {
+	outputlist := []Txoutput{CreateTxOutput(value+0, key.PublicKey), CreateTxOutput(value+1, key.PublicKey)}
+	inputlist := []Txinput{CreateTxInput(&outputlist[0], key), CreateTxInput(&outputlist[1], key)}
+	return Transaction{Message: fmt.Sprintf("Tx%d", value), Outputs: outputlist, Inputs: inputlist}
+}
+
+func createTxWithUnclaimedFee(value int, fee int, key ecdsa.PrivateKey) Transaction {
 	outputlist := []Txoutput{CreateTxOutput(value+0, key.PublicKey), CreateTxOutput(value+1, key.PublicKey)}
 	inputlist := []Txinput{CreateTxInput(&outputlist[0], key), CreateTxInput(&outputlist[1], key)}
 	return Transaction{Message: fmt.Sprintf("Tx%d", value), Outputs: outputlist, Inputs: inputlist}

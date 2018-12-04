@@ -122,7 +122,7 @@ func (self *Block) ComputeHashByte() []byte {
 	}
 }
 
-func AddFees(transactions []Transaction, keypair ecdsa.PrivateKey) []Transaction {
+func ClaimFees(transactions []Transaction, keypair ecdsa.PrivateKey) []Transaction {
 	// TODO: Implement
 	return transactions
 }
@@ -132,7 +132,7 @@ func CreateRandomTransaction(utxo map[string]Txoutput, keypair ecdsa.PrivateKey)
 	return nil
 }
 
-var blockreward int = 12
+var blockreward = 12
 
 func CreateCoinbaseTransaction(pubkey ecdsa.PublicKey) Transaction {
 	return Transaction{Outputs:[]Txoutput{CreateTxOutput(blockreward,pubkey)}}
@@ -144,6 +144,14 @@ func (self *Block) GetTransactions() []Transaction {
 	} else {
 		return []Transaction{}
 	}
+}
+
+func ComputePossibleFee(txlist []Transaction) int {
+	result := 0
+	for _,tx := range txlist {
+		result += tx.ComputePossibleFee()
+	}
+	return result
 }
 
 func (self *Transaction) ComputePossibleFee() int {
