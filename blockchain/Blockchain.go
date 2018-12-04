@@ -78,14 +78,18 @@ func CreateTxOutput(value int, key ecdsa.PublicKey) Txoutput {
 const Difficulty = 1
 
 func Mine(txlist []Transaction, prevhash string) Block {
-	requiredPrefix := strings.Repeat("0", Difficulty)
-
 	for {
-		newblock := CreateBlock(txlist, prevhash)
-		if strings.HasPrefix(newblock.Hash, requiredPrefix) {
+		newblock, valid := MineAttempt(txlist,prevhash)
+		if valid {
 			return newblock
 		}
 	}
+}
+
+func MineAttempt(txlist []Transaction, prevhash string) (Block, bool) {
+	requiredPrefix := strings.Repeat("0", Difficulty)
+	newblock := CreateBlock(txlist, prevhash)
+	return newblock, strings.HasPrefix(newblock.Hash, requiredPrefix)
 }
 
 func ComputeBlockHeight(head Block, knownBlocks *map[string]Block) int {
@@ -118,11 +122,22 @@ func (self *Block) ComputeHashByte() []byte {
 	}
 }
 
-/**
-Unfortunately, the MerkleTree implementation I am using can only store an even number of leafs .
-So, if there are an odd number of transactions, it duplicates the last transaction. -.-
-This method removes the duplicated transaction
- */
+func AddFees(transactions []Transaction, keypair ecdsa.PrivateKey) []Transaction {
+	// TODO: Implement
+	return transactions
+}
+
+func CreateRandomTransaction(utxo map[string]Txoutput, keypair ecdsa.PrivateKey) *Transaction {
+	// TODO: Implement
+	return nil
+}
+
+var blockreward int = 12
+
+func CreateCoinbaseTransaction(pubkey ecdsa.PublicKey) Transaction {
+	return Transaction{Outputs:[]Txoutput{CreateTxOutput(blockreward,pubkey)}}
+}
+
 func (self *Block) GetTransactions() []Transaction {
 	if self != nil {
 		return self.Transactions.GetElements()

@@ -8,6 +8,7 @@ import (
 	"github.com/emirpasic/gods/sets/treeset"
 	"github.com/gorilla/mux"
 	"log"
+	"math/rand"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -28,23 +29,30 @@ var utxoList = make(map[string]blockchain.Txoutput)
 var LINE_FEED = []byte{0x0A}
 var REGEX_VALID_HASH = regexp.MustCompile(`[a-fA-F0-9]{32}`)
 
-var peerList = make([]networking.Peer, 0, 5)
-
 func main() {
 	var head = blockchain.CreateGenesisBlock()
 	genesis = head.ComputeHash()
 	currentHead = genesis
 	blocklist[currentHead] = head
 
-	key1 := blockchain.CreateKeypair()
-	key2 := blockchain.CreateKeypair()
-	outputlist := []blockchain.Txoutput{blockchain.CreateTxOutput(0, key1.PublicKey), blockchain.CreateTxOutput(1, key2.PublicKey)}
-	inputlist := []blockchain.Txinput{blockchain.CreateTxInput(&outputlist[0], key1), blockchain.CreateTxInput(&outputlist[1], key2)}
-	transactions := []blockchain.Transaction{blockchain.Transaction{Outputs: outputlist, Inputs: inputlist}}
-	newblock := blockchain.Mine(transactions, currentHead)
-	blocklist[newblock.Hash] = newblock
-	currentHead = newblock.Hash
+	go mineContinously(200)
+	go createTxContinously(1000)
 
+	router := defineRoutingRules()
+
+	httpsrv := &http.Server{
+		Handler: router,
+		Addr:    "127.0.0.1:8000",
+		// Good practice: enforce timeouts for servers you create!
+		WriteTimeout: 25 * time.Second,
+		ReadTimeout:  25 * time.Second,
+	}
+
+	httpsrv.ListenAndServe()
+	log.Println("Listening for connections")
+}
+
+func defineRoutingRules() *mux.Router {
 	router := mux.NewRouter()
 	router.HandleFunc("/pending_transaction", PostTransaction).Methods("POST")
 	router.HandleFunc("/pending_transaction", GetTransactions).Methods("GET")
@@ -58,17 +66,47 @@ func main() {
 	blockrouter.HandleFunc("/head", GetHead).Methods("GET")
 	blockrouter.HandleFunc("/{hash:[a-fA-F0-9]+}", GetSpecificBlocks).Methods("GET")
 
-	httpsrv := &http.Server{
-		Handler: router,
-		Addr:    "127.0.0.1:8000",
-		// Good practice: enforce timeouts for servers you create!
-		WriteTimeout: 25 * time.Second,
-		ReadTimeout:  25 * time.Second,
-	}
-
-	httpsrv.ListenAndServe()
-	log.Println("Listening for connections")
+	return router
 }
+
+/* Simulates people using the chain */
+func createTxContinously(maxdelay int) {
+	keypair := blockchain.CreateKeypair()
+
+	for {
+		newtx := blockchain.CreateRandomTransaction(utxoList, keypair)
+		if newtx != nil {
+			networking.BroadcastTransaction(*newtx)
+			unclaimedTransactions.Add(newtx)
+		}
+		time.Sleep(time.Duration(rand.Intn(maxdelay))*time.Millisecond)
+	}
+}
+
+/* Simulates continous mining activity. The random delay is to make mining harder. */
+func mineContinously(maxdelay int) {
+	keypair := blockchain.CreateKeypair()
+
+	for {
+		txToInclude := networking.SelectTransactionsForNextBlock(unclaimedTransactions)
+		txToInclude = blockchain.AddFees(txToInclude, keypair)
+		txToInclude = append(txToInclude, blockchain.CreateCoinbaseTransaction(keypair.PublicKey))
+
+		valid := false
+		var newblock blockchain.Block
+		for !valid {
+			newblock, valid = blockchain.MineAttempt(txToInclude, currentHead)
+			time.Sleep(time.Duration(rand.Intn(maxdelay))*time.Millisecond)
+		}
+
+		if blockchain.ComputeBlockHeight(newblock, &blocklist)>blockchain.ComputeBlockHeight(blocklist[currentHead], &blocklist) {
+			networking.BroadcastBlock(newblock)
+			blocklist[newblock.Hash] = newblock
+			currentHead = newblock.Hash
+		}
+	}
+}
+
 func GetHead(writer http.ResponseWriter, request *http.Request) {
 	writer.WriteHeader(200)
 	writer.Write([]byte(currentHead))
@@ -128,7 +166,7 @@ func GetAllBlocks(writer http.ResponseWriter, request *http.Request) {
 	writeJson(result, writer)
 }
 func GetPeers(writer http.ResponseWriter, request *http.Request) {
-	writeJson(peerList, writer)
+	writeJson(networking.PeerList, writer)
 }
 func GetSpecificBlocks(writer http.ResponseWriter, request *http.Request) {
 	// Return more than one block iff requested
