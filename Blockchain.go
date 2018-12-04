@@ -1,65 +1,84 @@
 package main
 
 import (
-	"encoding/json"
+	"crypto/ecdsa"
 	"fmt"
 )
-
-
-type Block struct {
-	Hash    string
-	Payload string
-	Prev    *Block `json:"-"`
-	Next    *Block
-}
 
 type Blockchain struct {
 	Genesis Block
 }
 
-func (self *Block) ComputeHash() string {
-	if self.Prev != nil {
-		return computeSha256Hex(self.Payload +self.Prev.Hash)
-	} else {
-		return computeSha256Hex(self.Payload)
-	}
+type Block struct {
+	Hash         string
+	Payload      string
+	Prev         *Block `json:"-"`
+	Next         *Block
+	nonce        int64
+	transactions []transaction
+}
+
+type transaction struct {
+	Outputs []output
+	inputs  []input
+}
+
+type input struct {
+	from      *output
+	signature Signature
+}
+
+type output struct {
+	value  int
+	pubkey ecdsa.PublicKey
 }
 
 func CreateChain(msg string) Blockchain {
-	result := Blockchain{Genesis: Block{Payload: msg}}
-	result.Genesis.Hash = result.Genesis.ComputeHash()
+	result := Blockchain{Genesis: CreateBlock(msg)}
+	return result
+}
+
+func CreateBlock(msg string) Block {
+	result := Block{Payload: msg}
+	result.Hash = result.computeHash()
 	return result
 }
 
 func (self *Blockchain) Mine() {
-	blockheight, oldhead := self.computeBlockHeight()
-	newhead := Block{Payload: fmt.Sprintf("block%d",blockheight+1), Prev:oldhead}
-	newhead.Hash = newhead.ComputeHash()
+	blockheight, oldhead := self.ComputeBlockHeight()
+	newhead := Block{Payload: fmt.Sprintf("Block%d", blockheight+1), Prev: oldhead}
+	newhead.Hash = newhead.computeHash()
 
-	oldhead.Next =&newhead
+	oldhead.Next = &newhead
 }
 
-func (self *Blockchain) computeBlockHeight() (int,*Block) {
+func (self *Blockchain) ComputeBlockHeight() (int, *Block) {
 	var current *Block = &self.Genesis
-	i:=0
-	for ; current.Next != nil; i++ {current=current.Next
+	i := 0
+	for ; current.Next != nil; i++ {
+		current = current.Next
 	}
-	return i,current
+	return i, current
 }
 
+// ------Private parts-----------------------------------------
+
+func (self *Block) computeHash() string {
+	input := fmt.Sprintf("%s%d",self.Payload,self.nonce)
+
+	if self.Prev != nil {
+		return computeSha256Hex(input + self.Prev.Hash)
+	} else {
+		return computeSha256Hex(input)
+	}
+}
 func toArray(chain Blockchain) []Block {
 	var result []Block
 	current := &chain.Genesis
-	for ; current != nil; current=current.Next {
+	for ; current != nil; current = current.Next {
 		result = append(result, *current)
 	}
 	return result
-}
-
-func toJson(chain Blockchain) string {
-	array := toArray(chain)
-	bytes, _ := json.Marshal(array)
-	return fmt.Sprintf("%X", bytes)
 }
 
 func (self Blockchain) String() string {
@@ -67,5 +86,5 @@ func (self Blockchain) String() string {
 }
 func (self Block) String() string {
 	return fmt.Sprintf("Block(Hash='%s', msg='%s', Genesis=%t, head=%t)",
-		self.Hash,self.Payload,self.Prev ==nil,self.Next ==nil)
+		self.Hash, self.Payload, self.Prev == nil, self.Next == nil)
 }

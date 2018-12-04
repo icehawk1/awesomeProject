@@ -1,7 +1,6 @@
 package main
 
 import (
-	"strings"
 	"testing"
 )
 
@@ -11,7 +10,7 @@ func TestInitializeChain(t *testing.T) {
 		t.Errorf("Message didn't get through: %s",actual.Genesis.Payload)
 	}
 
-	if actual.Genesis.Hash != "EA38E30F75767D7E6C21EBA85B14016646A3B60ADE426CA966DAC940A5DB1BAB" {
+	if actual.Genesis.Hash != "35D8957A6394297E64EA4F84380A23E87AE37E1FF4B89A2D5856E2191DFDEB33" {
 		t.Errorf("Wrong Hash: %s",actual.Genesis.Hash)
 	}
 
@@ -26,7 +25,7 @@ func TestMineTwoBlocks(t *testing.T) {
 	actual.Mine()
 
 	if actual.Genesis.Next == nil {
-		t.Errorf("block 2 is missing")
+		t.Errorf("Block 2 is missing")
 	}
 
 	if actual.Genesis.Next.Prev != &actual.Genesis {
@@ -42,14 +41,3 @@ func TestMineTwoBlocks(t *testing.T) {
 	}
 }
 
-func TestJsonEncode(t *testing.T) {
-	chain := CreateChain("andere nachricht")
-	chain.Mine()
-	chain.Mine()
-	chain.Mine()
-
-	actual := toJson(chain)
-	if !strings.Contains(actual, "block3") {
-		t.Errorf("block3 is missing")
-	}
-}

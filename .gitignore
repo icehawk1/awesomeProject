@@ -11,4 +11,8 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 Gopkg.lock
+<<<<<<< HEAD
+=======
+.idea/
+>>>>>>> + Kann Inputs signieren
 vendor/
