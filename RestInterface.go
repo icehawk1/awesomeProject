@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"strconv"
 	"time"
 )
 
@@ -54,7 +55,8 @@ func main() {
 	blockrouter.HandleFunc("/", GetAllBlocks).Methods("GET")
 	blockrouter.HandleFunc("/", PostBlock).Methods("POST")
 	blockrouter.HandleFunc("/genesis", GetGenesisBlock).Methods("GET")
-	blockrouter.HandleFunc("/{hash:[a-fA-F0-9]+}", GetSpecificBlock).Methods("GET")
+	blockrouter.HandleFunc("/head", GetHead).Methods("GET")
+	blockrouter.HandleFunc("/{hash:[a-fA-F0-9]+}", GetSpecificBlocks).Methods("GET")
 
 	httpsrv := &http.Server{
 		Handler: router,
@@ -67,18 +69,22 @@ func main() {
 	httpsrv.ListenAndServe()
 	log.Println("Listening for connections")
 }
+func GetHead(writer http.ResponseWriter, request *http.Request) {
+	writer.WriteHeader(200)
+	writer.Write([]byte(currentHead))
+}
 func GetGenesisBlock(writer http.ResponseWriter, request *http.Request) {
-	writeJson(blocklist[genesis],writer)
+	writeJson(blocklist[genesis], writer)
 }
 
 func PostTransaction(writer http.ResponseWriter, request *http.Request) {
 	var newtx *blockchain.Transaction
-	error := json.NewDecoder(request.Body).Decode(&newtx)
+	err := json.NewDecoder(request.Body).Decode(&newtx)
 	if newtx != nil && newtx.Validate() {
 		unclaimedTransactions.Add(newtx)
 	} else if newtx == nil {
 		writer.WriteHeader(400)
-		writer.Write([]byte(fmt.Sprintf("JSON is invalid: %s\n",error)))
+		writer.Write([]byte(fmt.Sprintf("JSON is invalid: %s\n", err)))
 	} else {
 		writer.WriteHeader(400)
 		writer.Write([]byte(fmt.Sprintf("Transaction %s is invalid\n", newtx.ComputeHash())))
@@ -124,15 +130,27 @@ func GetAllBlocks(writer http.ResponseWriter, request *http.Request) {
 func GetPeers(writer http.ResponseWriter, request *http.Request) {
 	writeJson(peerList, writer)
 }
-func GetSpecificBlock(writer http.ResponseWriter, request *http.Request)  {
-	blockhash, _ := mux.Vars(request)["hash"]
-	block, ok := blocklist[blockhash]
-	if (ok) {
-		writeJson(block, writer)
-	} else {
-		writer.WriteHeader(404)
-		writer.Write([]byte(fmt.Sprintf("Block %s does not exist\n", blockhash)))
+func GetSpecificBlocks(writer http.ResponseWriter, request *http.Request) {
+	// Return more than one block iff requested
+	tmp := request.FormValue("num")
+	num, err := strconv.Atoi(tmp)
+	if err != nil || int(num) <= 0 {
+		writer.WriteHeader(400)
+		writer.Write([]byte(fmt.Sprintf("Incorrect number of blocks requested: %d , %s", num, tmp)))
+		return
 	}
+
+	result := make([]blockchain.Block, 0, num)
+	current, ok := mux.Vars(request)["hash"]
+	for i := 0; i < num && ok && current != ""; i++ {
+		block, ok := blocklist[current]
+		if ok {
+			result = append(result, block)
+			current = block.Prev
+		}
+	}
+
+	writeJson(result, writer)
 }
 func GetPing(writer http.ResponseWriter, request *http.Request) {
 	writer.Write([]byte("pong\n"))
