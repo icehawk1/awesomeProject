@@ -122,9 +122,18 @@ func (self *Block) ComputeHashByte() []byte {
 	}
 }
 
-func ClaimFees(transactions []Transaction, keypair ecdsa.PrivateKey) []Transaction {
-	// TODO: Implement
-	return transactions
+func ClaimFees(transactions []Transaction, keypair ecdsa.PrivateKey) ([]Transaction, []Txoutput) {
+	utxo := make([]Txoutput, 0, len(transactions))
+	for i:=0; i<len(transactions); i++ {
+		fee := transactions[i].ComputePossibleFee()
+		if fee > 0 {
+			out := CreateTxOutput(fee, keypair.PublicKey)
+			transactions[i].Outputs = append(transactions[i].Outputs, out)
+			utxo = append(utxo, out)
+		}
+	}
+
+	return transactions, utxo
 }
 
 func CreateRandomTransaction(utxo map[string]Txoutput, keypair ecdsa.PrivateKey) *Transaction {
@@ -155,7 +164,8 @@ func ComputePossibleFee(txlist []Transaction) int {
 }
 
 func (self *Transaction) ComputePossibleFee() int {
-	return util.Max(0, self.SumOutputs()-self.SumInputs())
+	result := util.Max(0, self.SumInputs()-self.SumOutputs())
+	return result
 }
 func (self *Transaction) SumInputs() int {
 	result := 0

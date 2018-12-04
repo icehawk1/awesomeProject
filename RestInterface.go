@@ -89,7 +89,7 @@ func mineContinously(maxdelay int) {
 
 	for {
 		txToInclude := networking.SelectTransactionsForNextBlock(unclaimedTransactions)
-		txToInclude = blockchain.ClaimFees(txToInclude, keypair)
+		txToInclude, _ = blockchain.ClaimFees(txToInclude, keypair)
 		txToInclude = append(txToInclude, blockchain.CreateCoinbaseTransaction(keypair.PublicKey))
 
 		valid := false
