@@ -6,6 +6,7 @@ import (
 	"crypto/elliptic"
 	"fmt"
 	"github.com/cbergoon/merkletree"
+	"github.com/emirpasic/gods/sets/treeset"
 	"math"
 	"math/rand"
 	"strings"
@@ -92,6 +93,17 @@ func MineAttempt(txlist []Transaction, prevhash string) (Block, bool) {
 	return newblock, strings.HasPrefix(newblock.Hash, requiredPrefix)
 }
 
+func SelectTransactionsForNextBlock(pendingTx *treeset.Set) []Transaction {
+	// Pending transactions are sorted by fee, just grabbing the first tx maximises overall fees
+	vals := pendingTx.Values()
+	result := make([]Transaction,0,util.Min(MAX_TRANSACTIONS_PER_BLOCK, len(vals)))
+	for i:=0; i<util.Min(MAX_TRANSACTIONS_PER_BLOCK, len(vals)); i++ {
+		tx := vals[i].(*Transaction)
+		result = append(result, *tx)
+	}
+	return result
+}
+
 func ComputeBlockHeight(head Block, knownBlocks *map[string]Block) int {
 	i := 0
 	var ok bool
@@ -137,8 +149,9 @@ func ClaimFees(transactions []Transaction, keypair ecdsa.PrivateKey) ([]Transact
 }
 
 func CreateRandomTransaction(utxo map[string]Txoutput, keypair ecdsa.PrivateKey) *Transaction {
-	// TODO: Implement
-	return nil
+	result := Transaction{Message:fmt.Sprintf("Rand Tx %d", rand.Int())}
+	// TODO: Zufällige UTXOs mit einbauen
+	return &result
 }
 
 var blockreward = 12

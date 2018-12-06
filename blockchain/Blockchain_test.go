@@ -63,6 +63,21 @@ func TestValidateTransactionInvalidValue(t *testing.T) {
 	assert.False(t, tx.Validate(), fmt.Sprintf("Transaction %s should NOT be valid", tx))
 }
 
+func TestValidateTransaction_empty(t *testing.T)  {
+	emptytx := Transaction{Message: "Ich bin ein Leerkörper"}
+	assert.True(t, emptytx.Validate())
+}
+
+func TestCreateRandomTransaction(t *testing.T) {
+	utxoMap := make(map[string]Txoutput)
+	for _,utxo := range utxoList {
+		utxoMap[utxo.ComputeHash()] = utxo
+	}
+
+	tx := CreateRandomTransaction(utxoMap, keylist[0])
+	assert.True(t,tx.Validate())
+}
+
 func TestValidateTransactionInvalidInput(t *testing.T) {
 	inputlist := make([]Txinput, 0, 10)
 	for i := 0; i < cap(inputlist)-1; i++ {

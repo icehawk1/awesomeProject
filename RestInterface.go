@@ -4,6 +4,7 @@ import (
 	"awesomeProject/blockchain"
 	"awesomeProject/networking"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"github.com/emirpasic/gods/sets/treeset"
 	"github.com/gorilla/mux"
@@ -30,6 +31,12 @@ var LINE_FEED = []byte{0x0A}
 var REGEX_VALID_HASH = regexp.MustCompile(`[a-fA-F0-9]{32}`)
 
 func main() {
+	host := *flag.String("host", "localhost", "Host to listen on")
+	port := *flag.Int("port", 8000, "Port to listen on")
+	flag.Parse()
+	//host:="localhost"
+	//	port:=8000
+
 	var head = blockchain.CreateGenesisBlock()
 	genesis = head.ComputeHash()
 	currentHead = genesis
@@ -42,14 +49,14 @@ func main() {
 
 	httpsrv := &http.Server{
 		Handler: router,
-		Addr:    "127.0.0.1:8000",
+		Addr:    fmt.Sprintf("%s:%d", host, port),
 		// Good practice: enforce timeouts for servers you create!
 		WriteTimeout: 25 * time.Second,
 		ReadTimeout:  25 * time.Second,
 	}
 
+	log.Println("Listening for connections on", httpsrv.Addr)
 	httpsrv.ListenAndServe()
-	log.Println("Listening for connections")
 }
 
 func defineRoutingRules() *mux.Router {
@@ -79,7 +86,7 @@ func createTxContinously(maxdelay int) {
 			networking.BroadcastTransaction(*newtx)
 			unclaimedTransactions.Add(newtx)
 		}
-		time.Sleep(time.Duration(rand.Intn(maxdelay))*time.Millisecond)
+		time.Sleep(time.Duration(rand.Intn(maxdelay)) * time.Millisecond)
 	}
 }
 
@@ -88,7 +95,7 @@ func mineContinously(maxdelay int) {
 	keypair := blockchain.CreateKeypair()
 
 	for {
-		txToInclude := networking.SelectTransactionsForNextBlock(unclaimedTransactions)
+		txToInclude := blockchain.SelectTransactionsForNextBlock(unclaimedTransactions)
 		txToInclude, _ = blockchain.ClaimFees(txToInclude, keypair)
 		txToInclude = append(txToInclude, blockchain.CreateCoinbaseTransaction(keypair.PublicKey))
 
@@ -96,11 +103,14 @@ func mineContinously(maxdelay int) {
 		var newblock blockchain.Block
 		for !valid {
 			newblock, valid = blockchain.MineAttempt(txToInclude, currentHead)
-			time.Sleep(time.Duration(rand.Intn(maxdelay))*time.Millisecond)
+			time.Sleep(time.Duration(rand.Intn(maxdelay)) * time.Millisecond)
 		}
 
-		if blockchain.ComputeBlockHeight(newblock, &blocklist)>blockchain.ComputeBlockHeight(blocklist[currentHead], &blocklist) {
+		if blockchain.ComputeBlockHeight(newblock, &blocklist) > blockchain.ComputeBlockHeight(blocklist[currentHead], &blocklist) {
 			networking.BroadcastBlock(newblock)
+			for _, tx := range txToInclude {
+				unclaimedTransactions.Remove(tx)
+			}
 			blocklist[newblock.Hash] = newblock
 			currentHead = newblock.Hash
 		}
@@ -130,7 +140,15 @@ func PostTransaction(writer http.ResponseWriter, request *http.Request) {
 }
 
 func GetTransactions(writer http.ResponseWriter, request *http.Request) {
-	writeJson(unclaimedTransactions.Values(), writer)
+
+	vals := unclaimedTransactions.Values()
+	txlist := make([]blockchain.Transaction, 0, len(vals))
+	for _, elem := range vals {
+		tx, _ := elem.(blockchain.Transaction)
+		txlist = append(txlist, tx)
+	}
+
+	writeJson(vals, writer)
 }
 
 func PostBlock(writer http.ResponseWriter, request *http.Request) {
