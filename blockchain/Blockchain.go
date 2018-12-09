@@ -2,6 +2,7 @@ package blockchain
 
 import (
 	"awesomeProject/util"
+	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"fmt"
@@ -73,14 +74,14 @@ func CreateTxInput(from *Txoutput, key ecdsa.PrivateKey) Txinput {
 }
 
 func CreateTxOutput(value int, key ecdsa.PublicKey) Txoutput {
-	return Txoutput{value, elliptic.Marshal(DefaultCurve,key.X,key.Y)}
+	return Txoutput{value, elliptic.Marshal(DefaultCurve, key.X, key.Y)}
 }
 
 const Difficulty = 1
 
 func Mine(txlist []Transaction, prevhash string) Block {
 	for {
-		newblock, valid := MineAttempt(txlist,prevhash)
+		newblock, valid := MineAttempt(txlist, prevhash)
 		if valid {
 			return newblock
 		}
@@ -96,8 +97,8 @@ func MineAttempt(txlist []Transaction, prevhash string) (Block, bool) {
 func SelectTransactionsForNextBlock(pendingTx *treeset.Set) []Transaction {
 	// Pending transactions are sorted by fee, just grabbing the first tx maximises overall fees
 	vals := pendingTx.Values()
-	result := make([]Transaction,0,util.Min(MAX_TRANSACTIONS_PER_BLOCK, len(vals)))
-	for i:=0; i<util.Min(MAX_TRANSACTIONS_PER_BLOCK, len(vals)); i++ {
+	result := make([]Transaction, 0, util.Min(MAX_TRANSACTIONS_PER_BLOCK, len(vals)))
+	for i := 0; i < util.Min(MAX_TRANSACTIONS_PER_BLOCK, len(vals)); i++ {
 		tx := vals[i].(*Transaction)
 		result = append(result, *tx)
 	}
@@ -136,7 +137,7 @@ func (self *Block) ComputeHashByte() []byte {
 
 func ClaimFees(transactions []Transaction, keypair ecdsa.PrivateKey) ([]Transaction, []Txoutput) {
 	utxo := make([]Txoutput, 0, len(transactions))
-	for i:=0; i<len(transactions); i++ {
+	for i := 0; i < len(transactions); i++ {
 		fee := transactions[i].ComputePossibleFee()
 		if fee > 0 {
 			out := CreateTxOutput(fee, keypair.PublicKey)
@@ -149,7 +150,7 @@ func ClaimFees(transactions []Transaction, keypair ecdsa.PrivateKey) ([]Transact
 }
 
 func CreateRandomTransaction(utxo map[string]Txoutput, keypair ecdsa.PrivateKey) *Transaction {
-	result := Transaction{Message:fmt.Sprintf("Rand Tx %d", rand.Int())}
+	result := Transaction{Message: fmt.Sprintf("Rand Tx %d", rand.Int())}
 	// TODO: Zufällige UTXOs mit einbauen
 	return &result
 }
@@ -157,7 +158,7 @@ func CreateRandomTransaction(utxo map[string]Txoutput, keypair ecdsa.PrivateKey)
 var blockreward = 12
 
 func CreateCoinbaseTransaction(pubkey ecdsa.PublicKey) Transaction {
-	return Transaction{Outputs:[]Txoutput{CreateTxOutput(blockreward,pubkey)}}
+	return Transaction{Outputs: []Txoutput{CreateTxOutput(blockreward, pubkey)}}
 }
 
 func (self *Block) GetTransactions() []Transaction {
@@ -170,7 +171,7 @@ func (self *Block) GetTransactions() []Transaction {
 
 func ComputePossibleFee(txlist []Transaction) int {
 	result := 0
-	for _,tx := range txlist {
+	for _, tx := range txlist {
 		result += tx.ComputePossibleFee()
 	}
 	return result
@@ -194,9 +195,18 @@ func (self *Transaction) SumOutputs() int {
 	}
 	return result
 }
+func (self Transaction) SumOutputsForAddr(addr []byte) int {
+	result := 0
+	for _, output := range self.Outputs {
+		if bytes.Equal(output.Pubkey, addr) {
+			result += output.Value
+		}
+	}
+	return result
+}
 func (self Transaction) ComputeHash() string { return fmt.Sprintf("%X", self.ComputeHashByte()) }
 func (self Transaction) ComputeHashByte() []byte {
-	hashinput := "tx"+self.Message
+	hashinput := "tx" + self.Message
 
 	for _, output := range self.Outputs {
 		hashinput += output.ComputeHash()
@@ -219,7 +229,7 @@ func (self Transaction) Equals(other merkletree.Content) (bool, error) {
 
 func (self Txinput) ComputeHash() string { return fmt.Sprintf("%X", self.ComputeHashByte()) }
 func (self Txinput) ComputeHashByte() []byte {
-	return util.ComputeSha256(fmt.Sprintf("input%X%X", self.Sig.R.Bytes(),self.Sig.S.Bytes()))
+	return util.ComputeSha256(fmt.Sprintf("input%X%X", self.Sig.R.Bytes(), self.Sig.S.Bytes()))
 }
 
 func (self Txoutput) ComputeHash() string { return fmt.Sprintf("%X", self.ComputeHashByte()) }

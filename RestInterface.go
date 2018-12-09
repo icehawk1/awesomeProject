@@ -3,6 +3,7 @@ package main
 import (
 	"awesomeProject/blockchain"
 	"awesomeProject/networking"
+	"awesomeProject/wallet"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -169,6 +170,7 @@ func PostBlock(writer http.ResponseWriter, request *http.Request) {
 
 		if newblock != nil {
 			unclaimedTransactions.Remove(newblock.Transactions)
+			wallet.TxHasBeenPublished(newblock.Transactions.GetElements())
 		}
 	} else {
 		writer.WriteHeader(400)
