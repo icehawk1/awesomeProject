@@ -4,7 +4,6 @@ import (
 	"awesomeProject/util"
 	"bytes"
 	"crypto/ecdsa"
-	"crypto/elliptic"
 	"fmt"
 	"github.com/cbergoon/merkletree"
 	"github.com/emirpasic/gods/sets/treeset"
@@ -69,12 +68,12 @@ func CreateBlock(txlist []Transaction, prevhash string) Block {
 
 func CreateTxInput(from *Txoutput, key ecdsa.PrivateKey) Txinput {
 	result := Txinput{From: from}
-	SignInput(&result, key)
+	result.Sig = SignInput(result, key)
 	return result
 }
 
 func CreateTxOutput(value int, key ecdsa.PublicKey) Txoutput {
-	return Txoutput{value, elliptic.Marshal(DefaultCurve, key.X, key.Y)}
+	return Txoutput{value, MarshalPubkey(key)}
 }
 
 const Difficulty = 1
@@ -182,6 +181,8 @@ func (self *Transaction) ComputePossibleFee() int {
 	return result
 }
 func (self *Transaction) SumInputs() int {
+	if self==nil {return 0}
+
 	result := 0
 	for _, input := range self.Inputs {
 		result += input.From.Value
@@ -189,6 +190,8 @@ func (self *Transaction) SumInputs() int {
 	return result
 }
 func (self *Transaction) SumOutputs() int {
+	if self==nil {return 0}
+
 	result := 0
 	for _, output := range self.Outputs {
 		result += output.Value

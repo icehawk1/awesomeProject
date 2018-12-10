@@ -2,7 +2,6 @@ package blockchain
 
 import (
 	"crypto/ecdsa"
-	"crypto/elliptic"
 	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
@@ -63,19 +62,19 @@ func TestValidateTransactionInvalidValue(t *testing.T) {
 	assert.False(t, tx.Validate(), fmt.Sprintf("Transaction %s should NOT be valid", tx))
 }
 
-func TestValidateTransaction_empty(t *testing.T)  {
+func TestValidateTransaction_empty(t *testing.T) {
 	emptytx := Transaction{Message: "Ich bin ein Leerkörper"}
 	assert.True(t, emptytx.Validate())
 }
 
 func TestCreateRandomTransaction(t *testing.T) {
 	utxoMap := make(map[string]Txoutput)
-	for _,utxo := range utxoList {
+	for _, utxo := range utxoList {
 		utxoMap[utxo.ComputeHash()] = utxo
 	}
 
 	tx := CreateRandomTransaction(utxoMap, keylist[0])
-	assert.True(t,tx.Validate())
+	assert.True(t, tx.Validate())
 }
 
 func TestValidateTransactionInvalidInput(t *testing.T) {
@@ -83,8 +82,7 @@ func TestValidateTransactionInvalidInput(t *testing.T) {
 	for i := 0; i < cap(inputlist)-1; i++ {
 		inputlist = append(inputlist, CreateTxInput(&utxoList[i], keylist[i]))
 	}
-	pubkey := elliptic.Marshal(DefaultCurve, keylist[0].PublicKey.X, keylist[0].PublicKey.Y)
-	inputlist = append(inputlist, CreateTxInput(&Txoutput{0, pubkey}, keylist[1]))
+	inputlist = append(inputlist, CreateTxInput(&Txoutput{0, MarshalPubkey(keylist[0].PublicKey)}, keylist[1]))
 
 	// Demonstrate that there can be more outputs than inputs
 	outputlist := make([]Txoutput, 0, 11)
