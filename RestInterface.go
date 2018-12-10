@@ -33,12 +33,14 @@ func main() {
 	host := *flag.String("host", "localhost", "Host to listen on")
 	port := *flag.Int("port", 8000, "Port to listen on")
 	flag.Parse()
+	networking.SelfAddr = networking.CreatePeer(fmt.Sprintf("http://%s:%d",host,port))
 
 	var head = blockchain.CreateGenesisBlock()
 	genesis = head.ComputeHash()
 	currentHead = genesis
 	blocklist[currentHead] = head
 
+	go exchangePeersContinously(1000)
 	go mineContinously(200)
 	go createTxContinously(1000)
 
@@ -71,6 +73,15 @@ func defineRoutingRules() *mux.Router {
 	blockrouter.HandleFunc("/{hash:[a-fA-F0-9]+}", GetSpecificBlocks).Methods("GET")
 
 	return router
+}
+
+func exchangePeersContinously(delay int) {
+	for {
+		for i:=0; i<len(networking.PeerList); i++ {
+			networking.ContactPeer(i)
+		}
+		time.Sleep(time.Duration(delay)*time.Millisecond)
+	}
 }
 
 /* Simulates people using the chain */
@@ -182,6 +193,10 @@ func GetAllBlocks(writer http.ResponseWriter, request *http.Request) {
 	writeJson(result, writer)
 }
 func GetPeers(writer http.ResponseWriter, request *http.Request) {
+	peeraddr := request.FormValue("url")
+	if peeraddr != "" {
+		networking.AddPeer(networking.CreatePeer(peeraddr))
+	}
 	writeJson(networking.PeerList, writer)
 }
 func GetSpecificBlocks(writer http.ResponseWriter, request *http.Request) {
