@@ -94,6 +94,8 @@ func MineAttempt(txlist []Transaction, prevhash string) (Block, bool) {
 }
 
 func SelectTransactionsForNextBlock(pendingTx *treeset.Set) []Transaction {
+	if pendingTx==nil || pendingTx.Empty() {return []Transaction{}}
+
 	// Pending transactions are sorted by fee, just grabbing the first tx maximises overall fees
 	vals := pendingTx.Values()
 	result := make([]Transaction, 0, util.Min(MAX_TRANSACTIONS_PER_BLOCK, len(vals)))

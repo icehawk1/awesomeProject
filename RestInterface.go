@@ -12,7 +12,6 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"regexp"
 	"strconv"
 	"time"
 )
@@ -29,14 +28,11 @@ var unclaimedTransactions = treeset.NewWith(compareTxByCollectableFee)
 // Hash -> UTXO
 var utxoList = make(map[string]blockchain.Txoutput)
 var LINE_FEED = []byte{0x0A}
-var REGEX_VALID_HASH = regexp.MustCompile(`[a-fA-F0-9]{32}`)
 
 func main() {
 	host := *flag.String("host", "localhost", "Host to listen on")
 	port := *flag.Int("port", 8000, "Port to listen on")
 	flag.Parse()
-	//host:="localhost"
-	//	port:=8000
 
 	var head = blockchain.CreateGenesisBlock()
 	genesis = head.ComputeHash()
@@ -164,7 +160,7 @@ func PostBlock(writer http.ResponseWriter, request *http.Request) {
 		}
 
 		blocklist[newblock.Hash] = *newblock
-		if (blockchain.ComputeBlockHeight(*newblock, &blocklist) > blockchain.ComputeBlockHeight(blocklist[currentHead], &blocklist)) {
+		if blockchain.ComputeBlockHeight(*newblock, &blocklist) > blockchain.ComputeBlockHeight(blocklist[currentHead], &blocklist) {
 			currentHead = newblock.ComputeHash()
 		}
 
