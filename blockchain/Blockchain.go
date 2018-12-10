@@ -2,10 +2,11 @@ package blockchain
 
 import (
 	"awesomeProject/util"
+	"bytes"
 	"crypto/ecdsa"
-	"crypto/elliptic"
 	"fmt"
 	"github.com/cbergoon/merkletree"
+	"github.com/emirpasic/gods/sets/treeset"
 	"math"
 	"math/rand"
 	"strings"
@@ -67,25 +68,40 @@ func CreateBlock(txlist []Transaction, prevhash string) Block {
 
 func CreateTxInput(from *Txoutput, key ecdsa.PrivateKey) Txinput {
 	result := Txinput{From: from}
-	SignInput(&result, key)
+	result.Sig = SignInput(result, key)
 	return result
 }
 
 func CreateTxOutput(value int, key ecdsa.PublicKey) Txoutput {
-	return Txoutput{value, elliptic.Marshal(DefaultCurve,key.X,key.Y)}
+	return Txoutput{value, MarshalPubkey(key)}
 }
 
 const Difficulty = 1
 
 func Mine(txlist []Transaction, prevhash string) Block {
-	requiredPrefix := strings.Repeat("0", Difficulty)
-
 	for {
-		newblock := CreateBlock(txlist, prevhash)
-		if strings.HasPrefix(newblock.Hash, requiredPrefix) {
+		newblock, valid := MineAttempt(txlist, prevhash)
+		if valid {
 			return newblock
 		}
 	}
+}
+
+func MineAttempt(txlist []Transaction, prevhash string) (Block, bool) {
+	requiredPrefix := strings.Repeat("0", Difficulty)
+	newblock := CreateBlock(txlist, prevhash)
+	return newblock, strings.HasPrefix(newblock.Hash, requiredPrefix)
+}
+
+func SelectTransactionsForNextBlock(pendingTx *treeset.Set) []Transaction {
+	// Pending transactions are sorted by fee, just grabbing the first tx maximises overall fees
+	vals := pendingTx.Values()
+	result := make([]Transaction, 0, util.Min(MAX_TRANSACTIONS_PER_BLOCK, len(vals)))
+	for i := 0; i < util.Min(MAX_TRANSACTIONS_PER_BLOCK, len(vals)); i++ {
+		tx := vals[i].(*Transaction)
+		result = append(result, *tx)
+	}
+	return result
 }
 
 func ComputeBlockHeight(head Block, knownBlocks *map[string]Block) int {
@@ -118,11 +134,32 @@ func (self *Block) ComputeHashByte() []byte {
 	}
 }
 
-/**
-Unfortunately, the MerkleTree implementation I am using can only store an even number of leafs .
-So, if there are an odd number of transactions, it duplicates the last transaction. -.-
-This method removes the duplicated transaction
- */
+func ClaimFees(transactions []Transaction, keypair ecdsa.PrivateKey) ([]Transaction, []Txoutput) {
+	utxo := make([]Txoutput, 0, len(transactions))
+	for i := 0; i < len(transactions); i++ {
+		fee := transactions[i].ComputePossibleFee()
+		if fee > 0 {
+			out := CreateTxOutput(fee, keypair.PublicKey)
+			transactions[i].Outputs = append(transactions[i].Outputs, out)
+			utxo = append(utxo, out)
+		}
+	}
+
+	return transactions, utxo
+}
+
+func CreateRandomTransaction(utxo map[string]Txoutput, keypair ecdsa.PrivateKey) *Transaction {
+	result := Transaction{Message: fmt.Sprintf("Rand Tx %d", rand.Int())}
+	// TODO: Zufällige UTXOs mit einbauen
+	return &result
+}
+
+var blockreward = 12
+
+func CreateCoinbaseTransaction(pubkey ecdsa.PublicKey) Transaction {
+	return Transaction{Outputs: []Txoutput{CreateTxOutput(blockreward, pubkey)}}
+}
+
 func (self *Block) GetTransactions() []Transaction {
 	if self != nil {
 		return self.Transactions.GetElements()
@@ -131,10 +168,21 @@ func (self *Block) GetTransactions() []Transaction {
 	}
 }
 
+func ComputePossibleFee(txlist []Transaction) int {
+	result := 0
+	for _, tx := range txlist {
+		result += tx.ComputePossibleFee()
+	}
+	return result
+}
+
 func (self *Transaction) ComputePossibleFee() int {
-	return util.Max(0, self.SumOutputs()-self.SumInputs())
+	result := util.Max(0, self.SumInputs()-self.SumOutputs())
+	return result
 }
 func (self *Transaction) SumInputs() int {
+	if self==nil {return 0}
+
 	result := 0
 	for _, input := range self.Inputs {
 		result += input.From.Value
@@ -142,15 +190,26 @@ func (self *Transaction) SumInputs() int {
 	return result
 }
 func (self *Transaction) SumOutputs() int {
+	if self==nil {return 0}
+
 	result := 0
 	for _, output := range self.Outputs {
 		result += output.Value
 	}
 	return result
 }
+func (self Transaction) SumOutputsForAddr(addr []byte) int {
+	result := 0
+	for _, output := range self.Outputs {
+		if bytes.Equal(output.Pubkey, addr) {
+			result += output.Value
+		}
+	}
+	return result
+}
 func (self Transaction) ComputeHash() string { return fmt.Sprintf("%X", self.ComputeHashByte()) }
 func (self Transaction) ComputeHashByte() []byte {
-	hashinput := "tx"+self.Message
+	hashinput := "tx" + self.Message
 
 	for _, output := range self.Outputs {
 		hashinput += output.ComputeHash()
@@ -173,7 +232,7 @@ func (self Transaction) Equals(other merkletree.Content) (bool, error) {
 
 func (self Txinput) ComputeHash() string { return fmt.Sprintf("%X", self.ComputeHashByte()) }
 func (self Txinput) ComputeHashByte() []byte {
-	return util.ComputeSha256(fmt.Sprintf("input%X%X", self.Sig.R.Bytes(),self.Sig.S.Bytes()))
+	return util.ComputeSha256(fmt.Sprintf("input%X%X", self.Sig.R.Bytes(), self.Sig.S.Bytes()))
 }
 
 func (self Txoutput) ComputeHash() string { return fmt.Sprintf("%X", self.ComputeHashByte()) }

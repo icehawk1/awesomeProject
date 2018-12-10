@@ -9,7 +9,7 @@ type Validatable interface {
 	Validate() bool
 }
 
-const MAX_TRANSACTIONS_PER_BLOCK = 4096
+const MAX_TRANSACTIONS_PER_BLOCK = 128
 
 func (self Block) Validate() bool {
 	if len(self.Transactions.GetElements()) > MAX_TRANSACTIONS_PER_BLOCK {
