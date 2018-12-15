@@ -2,7 +2,6 @@ package blockchain
 
 import (
 	"reflect"
-	"strings"
 )
 
 type Validatable interface {
@@ -12,21 +11,17 @@ type Validatable interface {
 const MAX_TRANSACTIONS_PER_BLOCK = 128
 
 func (self Block) Validate() bool {
-	if len(self.Transactions.GetElements()) > MAX_TRANSACTIONS_PER_BLOCK {
-		return false
-	}
-
+	hashIsCorrect := self.Hash == self.ComputeHash()
+	difficultsIsMet := BlockhashSatifiesDifficulty(self.Hash)
+	numTxIsWithinBounds := len(self.Transactions.GetElements()) <= MAX_TRANSACTIONS_PER_BLOCK
+	txAreValid := true
 	for _, tx := range self.Transactions.GetElements() {
 		if !tx.Validate() {
-			return false
+			txAreValid = false
 		}
 	}
 
-	if !strings.HasPrefix(self.ComputeHash(), strings.Repeat("0", Difficulty)) {
-		return false
-	}
-
-	return true
+	return hashIsCorrect && difficultsIsMet && numTxIsWithinBounds && txAreValid
 }
 
 const MAX_INPUTS_PER_TX = 1024
@@ -44,7 +39,9 @@ func (self Transaction) Validate() bool {
 
 		// Do not accept self referencing
 		for _, output := range self.Inputs {
-			if reflect.DeepEqual(input.From,output) {return false}
+			if reflect.DeepEqual(input.From, output) {
+				return false
+			}
 		}
 	}
 
