@@ -30,10 +30,10 @@ var utxoList = make(map[string]blockchain.Txoutput)
 var LINE_FEED = []byte{0x0A}
 
 func main() {
-	host := *flag.String("host", "localhost", "Host to listen on")
-	port := *flag.Int("port", 8000, "Port to listen on")
+	host := flag.String("host", "localhost", "Host to listen on")
+	port := flag.Int("port", 8000, "Port to listen on")
 	flag.Parse()
-	networking.SelfAddr = networking.CreatePeer(fmt.Sprintf("http://%s:%d",host,port))
+	networking.SelfAddr = networking.CreatePeer(fmt.Sprintf("http://%s:%d",*host,*port))
 
 	var head = blockchain.CreateGenesisBlock()
 	genesis = head.ComputeHash()
@@ -48,7 +48,7 @@ func main() {
 
 	httpsrv := &http.Server{
 		Handler: router,
-		Addr:    fmt.Sprintf("%s:%d", host, port),
+		Addr:    fmt.Sprintf("%s:%d", *host, *port),
 		// Good practice: enforce timeouts for servers you create!
 		WriteTimeout: 25 * time.Second,
 		ReadTimeout:  25 * time.Second,

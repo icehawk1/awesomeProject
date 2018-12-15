@@ -116,10 +116,10 @@ func BroadcastTransaction(tx blockchain.Transaction) []int {
 		response, err := httpclient.Post(addr, "application/json", buf)
 		if err != nil {
 			result = append(result, -1)
+		} else {
+			defer response.Body.Close()
+			result = append(result, response.StatusCode)
 		}
-		defer response.Body.Close()
-
-		result = append(result, response.StatusCode)
 	}
 
 	return result
@@ -138,5 +138,5 @@ func (self Peer) Validate() bool {
 }
 
 func (self Peer) String() string {
-	return fmt.Sprintf("Peer{Address='%s', score=%d}", self.Address, self.score)
+	return fmt.Sprintf("Peer{Address='%s', score=%d}", self.Address.String(), self.score)
 }

@@ -9,7 +9,7 @@ import (
 
 func TestMain(m *testing.M) {
 	PeerList = append(PeerList, CreatePeer("http://localhost:8000"))
-	PeerList = append(PeerList, CreatePeer("http://localhost:63975"))
+	PeerList = append(PeerList, CreatePeer("http://localhost:8001"))
 
 	os.Exit(m.Run())
 }
