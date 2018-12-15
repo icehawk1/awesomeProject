@@ -25,10 +25,14 @@ var httpclient = &http.Client{
 	Timeout: time.Second * 2,
 }
 
-func CreatePeer(address string) Peer {
-	parsed, _ := url.Parse(strings.TrimRight(address, "/"))
-	result := Peer{*parsed, 50}
-	return result
+func CreatePeer(address string) *Peer {
+	parsed, err := url.Parse(strings.TrimRight(address, "/"))
+	if err==nil {
+		result := Peer{*parsed, 50}
+		return &result
+	} else {
+		return nil
+	}
 }
 
 // Etabliert ein simples P2P-Netzwerk bei dem nicht antwortende oder überlastete Peers langsam herausgefiltert werden
@@ -39,7 +43,7 @@ func ContactPeer(i int) bool {
 	}
 
 	peer := PeerList[i]
-	addr := peer.Address.String() + "/peers?url=" + url.QueryEscape(SelfAddr.String())
+	addr := peer.Address.String() + "/peers?url=" + url.QueryEscape(SelfAddr.Address.String())
 	response, err := http.Get(addr)
 	if err != nil {
 		peer.score = util.Min(0, peer.score-5)
@@ -53,6 +57,30 @@ func ContactPeer(i int) bool {
 	} else {
 		peer.score = util.Min(0, peer.score-1)
 		return false
+	}
+}
+
+func FillPeerList(peer string) {
+	if peer=="" {return}
+
+	addr := strings.TrimRight(peer, "/") + "/peers?url=" + url.QueryEscape(SelfAddr.Address.String())
+	response, err := http.Get(addr)
+	if err != nil {
+		return
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode >= 200 && response.StatusCode <= 299 {
+		created := CreatePeer(peer)
+		if created != nil {AddPeer(*created)}
+
+		var remotePeers []Peer
+		json.NewDecoder(response.Body).Decode(&remotePeers)
+		if remotePeers != nil {
+			for _,rpeer := range remotePeers {
+				AddPeer(rpeer)
+			}
+		}
 	}
 }
 
@@ -82,7 +110,8 @@ func KnownPeer(peer Peer) bool {
 			return true
 		}
 	}
-	return false
+
+	return peer.Address==SelfAddr.Address
 }
 
 func BroadcastBlock(block blockchain.Block) []int {
@@ -96,6 +125,7 @@ func BroadcastBlock(block blockchain.Block) []int {
 		response, err := httpclient.Post(addr, "application/json", buf)
 		if err != nil {
 			result = append(result, -1)
+			continue
 		}
 		defer response.Body.Close()
 

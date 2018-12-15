@@ -32,14 +32,18 @@ var LINE_FEED = []byte{0x0A}
 func main() {
 	host := flag.String("host", "localhost", "Host to listen on")
 	port := flag.Int("port", 8000, "Port to listen on")
+	initalPeer := flag.String("initial-peer", "", "A initially known peer, that can be contacted to fill the peerlist")
 	flag.Parse()
-	networking.SelfAddr = networking.CreatePeer(fmt.Sprintf("http://%s:%d",*host,*port))
+	networking.SelfAddr = *networking.CreatePeer(fmt.Sprintf("http://%s:%d",*host,*port))
 
 
 	var head = blockchain.CreateGenesisBlock()
 	genesis = head.ComputeHash()
 	currentHead = genesis
 	blocklist[currentHead] = head
+
+	networking.FillPeerList(*initalPeer)
+	log.Printf("peerlist: %s\n", networking.PeerList)
 
 	go exchangePeersContinously(1000)
 	go mineContinously(200)
@@ -78,6 +82,7 @@ func defineRoutingRules() *mux.Router {
 
 func exchangePeersContinously(delay int) {
 	for {
+		log.Println("pl: ", networking.PeerList)
 		for i:=0; i<len(networking.PeerList); i++ {
 			networking.ContactPeer(i)
 		}
@@ -196,7 +201,8 @@ func GetAllBlocks(writer http.ResponseWriter, request *http.Request) {
 func GetPeers(writer http.ResponseWriter, request *http.Request) {
 	peeraddr := request.FormValue("url")
 	if peeraddr != "" {
-		networking.AddPeer(networking.CreatePeer(peeraddr))
+		created := networking.CreatePeer(peeraddr)
+		if created!=nil && created.Validate() { networking.AddPeer(*created) }
 	}
 	writeJson(networking.PeerList, writer)
 }

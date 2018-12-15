@@ -1,7 +1,6 @@
 package blockchain
 
 import (
-	"log"
 	"reflect"
 )
 
@@ -22,8 +21,6 @@ func (self Block) Validate() bool {
 		}
 	}
 
-	log.Println("hash: ", self.Hash)
-	log.Printf("hash=%t, difficulty=%t, numtx=%t, txvalid=%t\n", hashIsCorrect, difficultyIsMet,numTxIsWithinBounds,txAreValid)
 	return hashIsCorrect && difficultyIsMet && numTxIsWithinBounds && txAreValid
 }
 
