@@ -35,6 +35,7 @@ func main() {
 	flag.Parse()
 	networking.SelfAddr = networking.CreatePeer(fmt.Sprintf("http://%s:%d",*host,*port))
 
+
 	var head = blockchain.CreateGenesisBlock()
 	genesis = head.ComputeHash()
 	currentHead = genesis
@@ -160,9 +161,6 @@ func GetTransactions(writer http.ResponseWriter, request *http.Request) {
 }
 
 func PostBlock(writer http.ResponseWriter, request *http.Request) {
-	fmt.Println("Got a block")
-	fmt.Println(request.Body)
-	log.Println(request.Body)
 	var newblock *blockchain.Block
 	json.NewDecoder(request.Body).Decode(&newblock)
 	if newblock != nil {
