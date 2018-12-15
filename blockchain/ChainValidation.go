@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+	"log"
 	"reflect"
 )
 
@@ -12,7 +13,7 @@ const MAX_TRANSACTIONS_PER_BLOCK = 128
 
 func (self Block) Validate() bool {
 	hashIsCorrect := self.Hash == self.ComputeHash()
-	difficultsIsMet := BlockhashSatifiesDifficulty(self.Hash)
+	difficultyIsMet := BlockhashSatifiesDifficulty(self.Hash)
 	numTxIsWithinBounds := len(self.Transactions.GetElements()) <= MAX_TRANSACTIONS_PER_BLOCK
 	txAreValid := true
 	for _, tx := range self.Transactions.GetElements() {
@@ -21,7 +22,9 @@ func (self Block) Validate() bool {
 		}
 	}
 
-	return hashIsCorrect && difficultsIsMet && numTxIsWithinBounds && txAreValid
+	log.Println("hash: ", self.Hash)
+	log.Printf("hash=%t, difficulty=%t, numtx=%t, txvalid=%t\n", hashIsCorrect, difficultyIsMet,numTxIsWithinBounds,txAreValid)
+	return hashIsCorrect && difficultyIsMet && numTxIsWithinBounds && txAreValid
 }
 
 const MAX_INPUTS_PER_TX = 1024

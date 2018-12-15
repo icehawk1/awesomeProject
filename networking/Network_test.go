@@ -35,5 +35,5 @@ func TestBroadcastBlock(t *testing.T) {
 	txlist := blockchain.CreateMerklebaum([]blockchain.Transaction{{Message: "Tx nummer 1"}})
 	block := blockchain.Block{Prev: "", Hash: "abcdef", Transactions: txlist}
 	statusCodes := BroadcastBlock(block)
-	assert.Equal(t, []int{400, 400}, statusCodes)
+	assert.Equal(t, []int{422, 422}, statusCodes)
 }

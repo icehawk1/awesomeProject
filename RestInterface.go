@@ -142,7 +142,7 @@ func PostTransaction(writer http.ResponseWriter, request *http.Request) {
 		writer.WriteHeader(400)
 		writer.Write([]byte(fmt.Sprintf("JSON is invalid: %s\n", err)))
 	} else {
-		writer.WriteHeader(400)
+		writer.WriteHeader(422)
 		writer.Write([]byte(fmt.Sprintf("Transaction %s is invalid\n", newtx.ComputeHash())))
 	}
 }
@@ -160,12 +160,15 @@ func GetTransactions(writer http.ResponseWriter, request *http.Request) {
 }
 
 func PostBlock(writer http.ResponseWriter, request *http.Request) {
+	fmt.Println("Got a block")
+	fmt.Println(request.Body)
+	log.Println(request.Body)
 	var newblock *blockchain.Block
 	json.NewDecoder(request.Body).Decode(&newblock)
 	if newblock != nil {
 		newblock.Hash = newblock.ComputeHash()
 		if !newblock.Validate() {
-			writer.WriteHeader(400)
+			writer.WriteHeader(422)
 			writer.Write([]byte(fmt.Sprintf("Block %s is invalid\n", newblock.Hash)))
 			return
 		}

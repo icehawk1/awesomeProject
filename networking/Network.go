@@ -88,7 +88,7 @@ func KnownPeer(peer Peer) bool {
 func BroadcastBlock(block blockchain.Block) []int {
 	result := make([]int, 0, len(PeerList))
 	for _, peer := range PeerList {
-		addr := peer.Address.String() + "/block"
+		addr := peer.Address.String() + "/block/"
 
 		buf := new(bytes.Buffer)
 		json.NewEncoder(buf).Encode(block)
