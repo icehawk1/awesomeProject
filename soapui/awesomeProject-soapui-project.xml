@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:soapui-project id="77f80675-f3fe-4c56-852c-b5c0e19bcd82" activeEnvironment="Default" name="awesomeProject" resourceRoot="" soapui-version="5.4.0" abortOnError="false" runType="SEQUENTIAL" xmlns:con="http://eviware.com/soapui/config"><con:settings/><con:testSuite id="6de81e03-1395-4669-bf44-9761f58ed3a6" name="RestInterface"><con:settings/><con:runType>SEQUENTIAL</con:runType><con:testCase id="ff6b2602-d6a1-4637-b788-bc10cfbf41b2" failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="Get peer list" searchProperties="true"><con:settings/><con:testStep type="httprequest" name="HTTP Request" id="f9e75118-bfc7-405c-a97f-bfbb28240f74"><con:settings/><con:config method="GET" xsi:type="con:HttpRequest" id="cac7dde1-4048-4245-a270-f844f2b61eb6" name="HTTP Request" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:endpoint>${#Project#endpoint}/peers</con:endpoint><con:request/><con:assertion type="Valid HTTP Status Codes" id="7bf5a664-9d7b-4bdb-bf96-34ca851ad748" name="Valid HTTP Status Codes"><con:configuration><codes>200,202</codes></con:configuration></con:assertion><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters/></con:config></con:testStep><con:properties/></con:testCase><con:testCase id="be98163b-3b10-4573-9b98-d74180a4a7b9" failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="Ping" searchProperties="true"><con:settings/><con:testStep type="httprequest" name="HTTP Request" id="16c928ad-1473-4712-9a27-712ed2f71fe7"><con:settings/><con:config method="GET" xsi:type="con:HttpRequest" id="d0ea50e5-9403-4200-b7be-3be7bd6908fb" name="HTTP Request" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:endpoint>${#Project#endpoint}/ping</con:endpoint><con:request/><con:assertion type="Valid HTTP Status Codes" id="6cc778e3-5b5a-4355-b8e4-4d5dbc13a812" name="Valid HTTP Status Codes"><con:configuration><codes>200,202</codes></con:configuration></con:assertion><con:assertion type="Simple Contains" id="51a734dc-2603-491a-82db-579297650526" name="Contains"><con:configuration><token>pong</token><ignoreCase>true</ignoreCase><useRegEx>false</useRegEx></con:configuration></con:assertion><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters/></con:config></con:testStep><con:properties/></con:testCase><con:testCase id="93513b06-714a-4d5a-90c6-7f7e791bf7fd" failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="Get all blocks" searchProperties="true"><con:settings/><con:testStep type="httprequest" name="HTTP Request" id="87ddf7af-6439-4178-8472-2fc13a6fd0ac"><con:settings/><con:config method="GET" xsi:type="con:HttpRequest" id="adbb985b-35da-4cb5-85b9-4a4e827d873b" name="HTTP Request" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:endpoint>${#Project#endpoint}/block</con:endpoint><con:request/><con:assertion type="Valid HTTP Status Codes" id="e7960e17-6ef4-4e1f-a68e-b605b58f159a" name="Valid HTTP Status Codes"><con:configuration><codes>200,202</codes></con:configuration></con:assertion><con:assertion type="Simple Contains" id="b7716f64-6ad6-47f5-954c-031d689fba39" name="Contains transactions"><con:configuration><token>"Transactions"</token><ignoreCase>true</ignoreCase><useRegEx>false</useRegEx></con:configuration></con:assertion><con:assertion type="Simple Contains" id="f417470c-619e-4895-9dd4-e5f3b1d0b0cf" name="Merkle tree is present"><con:configuration><token>"Transactions":{"Hash":"</token><ignoreCase>true</ignoreCase><useRegEx>false</useRegEx></con:configuration></con:assertion><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters/></con:config></con:testStep><con:properties/></con:testCase><con:testCase id="428ce024-03dc-4fc6-9520-ae7c039c389e" failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="Get genesis block" searchProperties="true"><con:settings/><con:testStep type="httprequest" name="HTTP Request" id="ac4cd8c6-9fca-455a-805b-1afaef9be811"><con:settings/><con:config method="GET" xsi:type="con:HttpRequest" id="04d01093-6035-445c-9b60-be35b08a4653" name="HTTP Request" postQueryString="false" mediaType="application/xml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:endpoint>${#Project#endpoint}/block/genesis</con:endpoint><con:request/><con:assertion type="Valid HTTP Status Codes" id="9d1488a4-e56d-4a60-9c49-6c2dd8138da7" name="Valid HTTP Status Codes"><con:configuration><codes>200</codes></con:configuration></con:assertion><con:assertion type="Simple Contains" id="e8bca297-ce47-4c8c-ac8e-f39037f704af" name="Tree is empty"><con:configuration><token>"Transactions":{"Hash":""</token><ignoreCase>true</ignoreCase><useRegEx>false</useRegEx></con:configuration></con:assertion><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters/></con:config></con:testStep><con:properties><con:property><con:name>genesis_hash</con:name><con:value>09D4FB19ED454C180E2465B152D3EC27F4F4D078B921E0EF86570E512D83300F</con:value></con:property></con:properties></con:testCase><con:testCase id="460b5118-c3c7-4580-8945-81b531d4c489" failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="Post and fetch block" searchProperties="true"><con:settings/><con:testStep type="httprequest" name="Get current head" id="8739fc76-37ad-4d00-ada7-a98e5c164dc2"><con:settings/><con:config method="GET" xsi:type="con:HttpRequest" id="ff428327-f24e-4b2b-85a7-5e22deb0487e" name="Get current head" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:endpoint>${#Project#endpoint}/block/head</con:endpoint><con:request/><con:assertion type="Valid HTTP Status Codes" id="3dfbd1fb-0eb2-44da-adb4-5fe76679769e" name="Valid HTTP Status Codes"><con:configuration><codes>200</codes></con:configuration></con:assertion><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters/></con:config></con:testStep><con:testStep type="httprequest" name="Post block" id="8e9a99bb-2792-4413-8c2c-efb16ea3c647"><con:settings/><con:config method="POST" xsi:type="con:HttpRequest" id="155ca2df-fef4-4918-81ee-103945e1ef16" name="Post block" postQueryString="false" mediaType="application/json" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:endpoint>${#Project#endpoint}/block</con:endpoint><con:request>{
+    "Hash": "0ABD9DB3B9F2ACD62E2AE8725EB5AF49438D2AF0B79F4FC196BA2F5BDB1C1F36",
+    "Prev": "062700E328CBDF43DA48652899920516AC57C8D0D2D233F0F1CFCAC03DD09695",
+    "Nonce": 5600924393587988459,
+    "Transactions": {
+      "Hash": "02BCC7C827D88C0821A6926068706D3096631737B8B2F7B412BD0D00B4761E3E",
+      "Left": null,
+      "Right": null,
+      "Elem": {
+        "Message": "",
+        "Outputs": [
+          {
+            "Value": 0,
+            "Pubkey": "BHongdz0No+BJtPWRu/drD975QlCA9RZnajcBgnvBfi71TOKWqIq/xmEh3eswoz9j7MDvkv/AiD/+NivoR0J/sY="
+          },
+          {
+            "Value": 1,
+            "Pubkey": "BEM1EEH9zONeMz3soBknQJeIkr8rxWF8XE9ihKY8VPu67hzuNqhyGtCLigGOVBtHkOOEMJxwDc2/Dy5Ip4//8Fo="
+          }
+        ],
+        "Inputs": [
+          {
+            "From": {
+              "Value": 0,
+              "Pubkey": "BHongdz0No+BJtPWRu/drD975QlCA9RZnajcBgnvBfi71TOKWqIq/xmEh3eswoz9j7MDvkv/AiD/+NivoR0J/sY="
+            },
+            "Sig": {
+              "R": 62854593873331803526184257452881153550119952871782018102247513827368246740618,
+              "S": 58160246806555967381447468838189996167051202229598657073935771465385374469982
+            }
+          },
+          {
+            "From": {
+              "Value": 1,
+              "Pubkey": "BEM1EEH9zONeMz3soBknQJeIkr8rxWF8XE9ihKY8VPu67hzuNqhyGtCLigGOVBtHkOOEMJxwDc2/Dy5Ip4//8Fo="
+            },
+            "Sig": {
+              "R": 99821444406722379102962345967201357976210151978029548509620748846320380122723,
+              "S": 40125960365095271048003959947978276084737410549008184649716724939172394021449
+            }
+          }
+        ]
+      }
+    }
+  }</con:request><con:assertion type="Valid HTTP Status Codes" id="27a40afb-2e0c-4afc-9884-a3e180c26097" name="Valid HTTP Status Codes"><con:configuration><codes>200</codes></con:configuration></con:assertion><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters/></con:config></con:testStep><con:testStep type="httprequest" name="Fetch posted block" id="48324cd9-c7c0-459d-b811-57fb8d304f2e"><con:settings/><con:config method="GET" xsi:type="con:HttpRequest" id="ad27cfeb-dee4-40a6-bbeb-137b2da26cf0" name="Fetch posted block" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:endpoint>${#Project#endpoint}/block/0ABD9DB3B9F2ACD62E2AE8725EB5AF49438D2AF0B79F4FC196BA2F5BDB1C1F36?num=1</con:endpoint><con:request/><con:assertion type="Valid HTTP Status Codes" id="c3cbb851-3932-4fa8-b810-a4b245213180" name="Valid HTTP Status Codes"><con:configuration><codes>200</codes></con:configuration></con:assertion><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters/></con:config></con:testStep><con:testStep type="httprequest" name="Fetch posted block and its predecessor" id="bfe3ce55-f41f-459f-8fcb-de50926aac43"><con:settings/><con:config method="GET" xsi:type="con:HttpRequest" id="ad27cfeb-dee4-40a6-bbeb-137b2da26cf0" name="Fetch posted block and its predecessor" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:endpoint>${#Project#endpoint}/block/0ABD9DB3B9F2ACD62E2AE8725EB5AF49438D2AF0B79F4FC196BA2F5BDB1C1F36?num=2</con:endpoint><con:request/><con:assertion type="Valid HTTP Status Codes" id="c3cbb851-3932-4fa8-b810-a4b245213180" name="Valid HTTP Status Codes"><con:configuration><codes>200</codes></con:configuration></con:assertion><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters/></con:config></con:testStep><con:properties/></con:testCase><con:testCase id="a81803a2-4274-4a2a-9ec8-bb9dc99f672c" failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="Post and fetch transaction" searchProperties="true"><con:settings/><con:testStep type="httprequest" name="Post transaction" id="5a791457-235d-46a5-a6aa-b59e8c6d25f7"><con:settings/><con:config method="POST" xsi:type="con:HttpRequest" id="3c9665ae-eb99-4647-8aff-d6d28f67972a" name="Post transaction" postQueryString="false" mediaType="application/json" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:endpoint>${#Project#endpoint}/pending_transaction</con:endpoint><con:request>{ "Message": "abc123",
+        "Outputs": [
+          {
+            "Value": 0,
+            "Pubkey": "BHongdz0No+BJtPWRu/drD975QlCA9RZnajcBgnvBfi71TOKWqIq/xmEh3eswoz9j7MDvkv/AiD/+NivoR0J/sY="
+          },
+          {
+            "Value": 1,
+            "Pubkey": "BEM1EEH9zONeMz3soBknQJeIkr8rxWF8XE9ihKY8VPu67hzuNqhyGtCLigGOVBtHkOOEMJxwDc2/Dy5Ip4//8Fo="
+          }
+        ],
+        "Inputs": [
+          {
+            "From": {
+              "Value": 0,
+              "Pubkey": "BHongdz0No+BJtPWRu/drD975QlCA9RZnajcBgnvBfi71TOKWqIq/xmEh3eswoz9j7MDvkv/AiD/+NivoR0J/sY="
+            },
+            "Sig": {
+              "R": 62854593873331803526184257452881153550119952871782018102247513827368246740618,
+              "S": 58160246806555967381447468838189996167051202229598657073935771465385374469982
+            }
+          },
+          {
+            "From": {
+              "Value": 1,
+              "Pubkey": "BEM1EEH9zONeMz3soBknQJeIkr8rxWF8XE9ihKY8VPu67hzuNqhyGtCLigGOVBtHkOOEMJxwDc2/Dy5Ip4//8Fo="
+            },
+            "Sig": {
+              "R": 99821444406722379102962345967201357976210151978029548509620748846320380122723,
+              "S": 40125960365095271048003959947978276084737410549008184649716724939172394021449
+            }
+          }
+        ]
+      }</con:request><con:assertion type="Valid HTTP Status Codes" id="fa9d51b5-2897-4e76-8ec2-f050bf476b5d" name="Valid HTTP Status Codes"><con:configuration><codes>200</codes></con:configuration></con:assertion><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters/></con:config></con:testStep><con:testStep type="httprequest" name="Fetch all pending transactions" id="5c08d1ef-5c1d-4c30-903e-3fb3e9d3d28c"><con:settings/><con:config method="GET" xsi:type="con:HttpRequest" id="ecd268b0-d729-4f61-af07-5ca02939256d" name="Fetch all pending transactions" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:endpoint>${#Project#endpoint}/pending_transaction</con:endpoint><con:request/><con:assertion type="Valid HTTP Status Codes" id="0fe5e7a7-67b4-4461-80eb-3eb2eb5cd17d" name="Valid HTTP Status Codes"><con:configuration><codes>200</codes></con:configuration></con:assertion><con:assertion type="Simple Contains" id="214f52f8-ffa5-458b-bd08-89e13cac6c79" name="Contains"><con:configuration><token>abc123</token><ignoreCase>false</ignoreCase><useRegEx>false</useRegEx></con:configuration></con:assertion><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters/></con:config></con:testStep><con:properties/></con:testCase><con:properties/></con:testSuite><con:properties><con:property><con:name>endpoint</con:name><con:value>http://localhost:8000</con:value></con:property></con:properties><con:wssContainer/><con:oAuth2ProfileContainer/><con:oAuth1ProfileContainer/><con:sensitiveInformation/></con:soapui-project>
