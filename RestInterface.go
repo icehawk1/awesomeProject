@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"github.com/emirpasic/gods/sets/treeset"
 	"github.com/gorilla/mux"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -40,7 +39,7 @@ var (
 )
 
 func init() {
-	Debug = log.New(ioutil.Discard, "DEBUG: ", log.Ldate|log.Ltime|log.Lshortfile)
+	Debug = log.New(os.Stdout, "DEBUG: ", log.Ldate|log.Ltime|log.Lshortfile)
 	Info = log.New(os.Stdout, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
 	Warning = log.New(os.Stdout, "WARNING: ", log.Ldate|log.Ltime|log.Lshortfile)
 	Error = log.New(os.Stderr, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
@@ -67,6 +66,7 @@ func simulateActiveChain(host *string, port *int, initalPeer *string) {
 	go exchangePeersContinously(1000)
 	go mineContinously(200)
 	go createTxContinously(1000)
+	go logNodeStateContinously(2000)
 }
 
 func parseCommandLineArguments() (*string, *int, *string) {
@@ -106,6 +106,22 @@ func defineRoutingRules() *mux.Router {
 	return router
 }
 
+/** Prints the current state of the node for debug purposes */
+func logNodeStateContinously(delay int) {
+	for {
+		Debug.Println(computeNodeState())
+		time.Sleep(time.Duration(delay) * time.Millisecond)
+	}
+}
+
+func computeNodeState() string {
+	return fmt.Sprintf("{ \"numpeers\"=%d, \"blockheight\"=%d, \"current_head\"=\"%s\", " +
+		"\"num_pending_tx\"=%d, num_utxo=%d }", len(networking.PeerList),
+		blockchain.ComputeBlockHeight(blocklist[currentHead],&blocklist), currentHead, unclaimedTransactions.Size(),
+		len(utxoList))
+}
+
+/** Exchanges peer lists, so that the network can form itself */
 func exchangePeersContinously(delay int) {
 	for {
 		for i := 0; i < len(networking.PeerList); i++ {
@@ -256,7 +272,7 @@ func GetSpecificBlocks(writer http.ResponseWriter, request *http.Request) {
 	writeJson(result, writer)
 }
 func GetPing(writer http.ResponseWriter, request *http.Request) {
-	writer.Write([]byte("pong\n"))
+	writer.Write([]byte(fmt.Sprintf("Current state:\n%s\n",computeNodeState())))
 }
 
 func compareTxByCollectableFee(a, b interface{}) int {
