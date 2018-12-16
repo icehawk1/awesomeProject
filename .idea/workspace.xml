@@ -2,8 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="28998b73-5b42-4d2c-b197-025ad9b7f1aa" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/docker/Dockerfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docker/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/docker/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/soapui/awesomeProject-soapui-project.xml" beforeDir="false" afterPath="$PROJECT_DIR$/soapui/awesomeProject-soapui-project.xml" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -16,61 +17,24 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/RestInterface.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="104">
+            <state relative-caret-position="390">
               <caret line="42" column="30" selection-start-line="42" selection-start-column="30" selection-end-line="42" selection-end-column="30" />
               <folding>
-                <element signature="e#280#818#0" />
-                <element signature="n#!!block;n#funcName#0" />
-                <element signature="n#!!block;n#funcName#0" />
-                <element signature="e#1485#1684#0" />
-                <element signature="e#1528#1551#0" />
                 <element signature="n#!!block;n#defineRoutingRules#0" />
                 <element signature="n#!!block;n#logNodeStateContinously#0" />
                 <element signature="n#!!block;n#exchangePeersContinously#0" />
-                <element signature="e#2607#2641#0" />
-                <element signature="e#2700#2738#0" />
                 <element signature="n#!!block;n#createTxContinously#0" />
-                <element signature="e#2825#3065#0" />
-                <element signature="e#2910#2994#0" />
-                <element signature="e#3069#3154#0" />
                 <element signature="n#!!block;n#mineContinously#0" />
-                <element signature="e#3237#4005#0" />
-                <element signature="e#3539#3683#0" />
-                <element signature="e#3810#4002#0" />
-                <element signature="e#3885#3928#0" />
                 <element signature="n#!!block;n#GetHead#0" />
                 <element signature="n#!!block;n#GetGenesisBlock#0" />
                 <element signature="n#!!block;n#PostTransaction#0" />
-                <element signature="e#4452#4491#0" />
-                <element signature="e#4513#4609#0" />
-                <element signature="e#4574#4604#0" />
-                <element signature="e#4615#4733#0" />
-                <element signature="e#4676#4728#0" />
                 <element signature="n#!!block;n#GetTransactions#0" />
-                <element signature="e#4935#5010#0" />
                 <element signature="n#!!block;n#PostBlock#0" />
-                <element signature="e#5209#5761#0" />
-                <element signature="e#5278#5397#0" />
-                <element signature="e#5341#5381#0" />
-                <element signature="e#5564#5609#0" />
-                <element signature="e#5632#5758#0" />
-                <element signature="e#5767#5854#0" />
                 <element signature="n#!!block;n#GetAllBlocks#0" />
-                <element signature="e#6019#6055#0" />
                 <element signature="n#!!block;n#GetPeers#0" />
-                <element signature="e#6209#6331#0" />
-                <element signature="e#6296#6328#0" />
                 <element signature="n#!!block;n#GetSpecificBlocks#0" />
-                <element signature="e#6591#6725#0" />
-                <element signature="e#6652#6711#0" />
-                <element signature="e#6862#6972#0" />
-                <element signature="e#6906#6969#0" />
                 <element signature="n#!!block;n#GetPing#0" />
                 <element signature="n#!!block;n#compareTxByCollectableFee#0" />
-                <element signature="e#7305#7398#0" />
-                <element signature="e#7315#7343#0" />
-                <element signature="e#7345#7374#0" />
-                <element signature="e#7376#7395#0" />
                 <element signature="n#!!block;n#writeJson#0" />
               </folding>
             </state>
@@ -80,8 +44,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/docker/Dockerfile">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="120">
-              <caret line="8" column="8" lean-forward="true" selection-start-line="8" selection-start-column="8" selection-end-line="8" selection-end-column="8" />
+            <state relative-caret-position="210">
+              <caret line="14" column="8" lean-forward="true" selection-start-line="14" selection-start-column="8" selection-end-line="14" selection-end-column="8" />
             </state>
           </provider>
         </entry>
@@ -107,7 +71,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/networking/Network.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="194">
+            <state relative-caret-position="1860">
               <caret line="137" column="35" selection-start-line="137" selection-start-column="29" selection-end-line="137" selection-end-column="35" />
               <folding>
                 <element signature="e#169#209#0" />
@@ -163,7 +127,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -200,6 +163,7 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -222,7 +186,16 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Go Build.port 8000">
+  <component name="RunManager" selected="Go Build.exploring">
+    <configuration name="exploring" type="GoApplicationRunConfiguration" factoryName="Go Application">
+      <module name="awesomeProject" />
+      <working_directory value="$PROJECT_DIR$/" />
+      <parameters value="--port 8000 --host 0.0.0.0" />
+      <kind value="DIRECTORY" />
+      <filePath value="$PROJECT_DIR$/" />
+      <directory value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
     <configuration name="port 8000" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true">
       <module name="awesomeProject" />
       <working_directory value="$PROJECT_DIR$/" />
@@ -291,10 +264,20 @@
       <filePath value="$PROJECT_DIR$/" />
       <method v="2" />
     </configuration>
+    <configuration name="docker/Dockerfile" type="docker-deploy" factoryName="dockerfile">
+      <deployment type="dockerfile">
+        <settings>
+          <option name="sourceFilePath" value="docker/Dockerfile" />
+        </settings>
+      </deployment>
+      <method v="2" />
+    </configuration>
     <list>
+      <item itemvalue="Docker.docker/Dockerfile" />
       <item itemvalue="Go Build.port 8001" />
       <item itemvalue="Go Build.port 8002" />
       <item itemvalue="Go Build.port 8003" />
+      <item itemvalue="Go Build.exploring" />
       <item itemvalue="Go Build.port 8000" />
       <item itemvalue="Go Test.TestBroadcastBlock in awesomeProject/networking" />
       <item itemvalue="Go Test.go test awesomeProject" />
@@ -345,20 +328,20 @@
     <frame x="67" y="25" width="1533" height="875" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.25622058" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.25958306" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.3297587" />
-      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.49966374" visible="true" weight="0.27345845" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.49966374" visible="true" weight="0.27345845" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.28820375" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
-      <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Docker" order="7" weight="0.3297587" />
       <window_info anchor="bottom" id="Database Changes" order="8" />
       <window_info anchor="bottom" id="Version Control" order="9" />
-      <window_info anchor="bottom" id="Terminal" order="10" />
+      <window_info anchor="bottom" id="Terminal" order="10" weight="0.3297587" />
       <window_info anchor="bottom" id="Event Log" order="11" sideWeight="0.5003362" side_tool="true" weight="0.3297587" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
@@ -377,21 +360,34 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/networking/Network_test.go">
+    <entry file="file:///usr/lib/go-1.10/src/time/time.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="375">
-          <caret line="30" selection-start-line="30" selection-end-line="30" />
+        <state relative-caret-position="350">
+          <caret line="619" column="5" selection-start-line="619" selection-start-column="5" selection-end-line="619" selection-end-column="5" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/networking/Network.go">
+    <entry file="file://$PROJECT_DIR$/RestInterface.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="194">
-          <caret line="137" column="35" selection-start-line="137" selection-start-column="29" selection-end-line="137" selection-end-column="35" />
+        <state relative-caret-position="390">
+          <caret line="42" column="30" selection-start-line="42" selection-start-column="30" selection-end-line="42" selection-end-column="30" />
           <folding>
-            <element signature="e#169#209#0" />
-            <element signature="n#!!block;n#BroadcastTransaction#0" />
-            <element signature="n#!!block;n#String#0" />
+            <element signature="n#!!block;n#defineRoutingRules#0" />
+            <element signature="n#!!block;n#logNodeStateContinously#0" />
+            <element signature="n#!!block;n#exchangePeersContinously#0" />
+            <element signature="n#!!block;n#createTxContinously#0" />
+            <element signature="n#!!block;n#mineContinously#0" />
+            <element signature="n#!!block;n#GetHead#0" />
+            <element signature="n#!!block;n#GetGenesisBlock#0" />
+            <element signature="n#!!block;n#PostTransaction#0" />
+            <element signature="n#!!block;n#GetTransactions#0" />
+            <element signature="n#!!block;n#PostBlock#0" />
+            <element signature="n#!!block;n#GetAllBlocks#0" />
+            <element signature="n#!!block;n#GetPeers#0" />
+            <element signature="n#!!block;n#GetSpecificBlocks#0" />
+            <element signature="n#!!block;n#GetPing#0" />
+            <element signature="n#!!block;n#compareTxByCollectableFee#0" />
+            <element signature="n#!!block;n#writeJson#0" />
           </folding>
         </state>
       </provider>
@@ -403,79 +399,29 @@
         </state>
       </provider>
     </entry>
-    <entry file="file:///usr/lib/go-1.10/src/time/time.go">
+    <entry file="file://$PROJECT_DIR$/networking/Network_test.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="350">
-          <caret line="619" column="5" selection-start-line="619" selection-start-column="5" selection-end-line="619" selection-end-column="5" />
+        <state relative-caret-position="375">
+          <caret line="30" selection-start-line="30" selection-end-line="30" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/RestInterface.go">
+    <entry file="file://$PROJECT_DIR$/networking/Network.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="104">
-          <caret line="42" column="30" selection-start-line="42" selection-start-column="30" selection-end-line="42" selection-end-column="30" />
+        <state relative-caret-position="1860">
+          <caret line="137" column="35" selection-start-line="137" selection-start-column="29" selection-end-line="137" selection-end-column="35" />
           <folding>
-            <element signature="e#280#818#0" />
-            <element signature="n#!!block;n#funcName#0" />
-            <element signature="n#!!block;n#funcName#0" />
-            <element signature="e#1485#1684#0" />
-            <element signature="e#1528#1551#0" />
-            <element signature="n#!!block;n#defineRoutingRules#0" />
-            <element signature="n#!!block;n#logNodeStateContinously#0" />
-            <element signature="n#!!block;n#exchangePeersContinously#0" />
-            <element signature="e#2607#2641#0" />
-            <element signature="e#2700#2738#0" />
-            <element signature="n#!!block;n#createTxContinously#0" />
-            <element signature="e#2825#3065#0" />
-            <element signature="e#2910#2994#0" />
-            <element signature="e#3069#3154#0" />
-            <element signature="n#!!block;n#mineContinously#0" />
-            <element signature="e#3237#4005#0" />
-            <element signature="e#3539#3683#0" />
-            <element signature="e#3810#4002#0" />
-            <element signature="e#3885#3928#0" />
-            <element signature="n#!!block;n#GetHead#0" />
-            <element signature="n#!!block;n#GetGenesisBlock#0" />
-            <element signature="n#!!block;n#PostTransaction#0" />
-            <element signature="e#4452#4491#0" />
-            <element signature="e#4513#4609#0" />
-            <element signature="e#4574#4604#0" />
-            <element signature="e#4615#4733#0" />
-            <element signature="e#4676#4728#0" />
-            <element signature="n#!!block;n#GetTransactions#0" />
-            <element signature="e#4935#5010#0" />
-            <element signature="n#!!block;n#PostBlock#0" />
-            <element signature="e#5209#5761#0" />
-            <element signature="e#5278#5397#0" />
-            <element signature="e#5341#5381#0" />
-            <element signature="e#5564#5609#0" />
-            <element signature="e#5632#5758#0" />
-            <element signature="e#5767#5854#0" />
-            <element signature="n#!!block;n#GetAllBlocks#0" />
-            <element signature="e#6019#6055#0" />
-            <element signature="n#!!block;n#GetPeers#0" />
-            <element signature="e#6209#6331#0" />
-            <element signature="e#6296#6328#0" />
-            <element signature="n#!!block;n#GetSpecificBlocks#0" />
-            <element signature="e#6591#6725#0" />
-            <element signature="e#6652#6711#0" />
-            <element signature="e#6862#6972#0" />
-            <element signature="e#6906#6969#0" />
-            <element signature="n#!!block;n#GetPing#0" />
-            <element signature="n#!!block;n#compareTxByCollectableFee#0" />
-            <element signature="e#7305#7398#0" />
-            <element signature="e#7315#7343#0" />
-            <element signature="e#7345#7374#0" />
-            <element signature="e#7376#7395#0" />
-            <element signature="n#!!block;n#writeJson#0" />
+            <element signature="e#169#209#0" />
+            <element signature="n#!!block;n#BroadcastTransaction#0" />
+            <element signature="n#!!block;n#String#0" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/docker/Dockerfile">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="120">
-          <caret line="8" column="8" lean-forward="true" selection-start-line="8" selection-start-column="8" selection-end-line="8" selection-end-column="8" />
+        <state relative-caret-position="210">
+          <caret line="14" column="8" lean-forward="true" selection-start-line="14" selection-start-column="8" selection-end-line="14" selection-end-column="8" />
         </state>
       </provider>
     </entry>
