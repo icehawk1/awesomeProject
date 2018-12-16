@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/emirpasic/gods/sets/treeset"
 	"github.com/gorilla/mux"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -39,7 +40,7 @@ var (
 )
 
 func init() {
-	Debug = log.New(os.Stdout, "DEBUG: ", log.Ldate|log.Ltime|log.Lshortfile)
+	Debug = log.New(ioutil.Discard, "DEBUG: ", log.Ldate|log.Ltime|log.Lshortfile)
 	Info = log.New(os.Stdout, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
 	Warning = log.New(os.Stdout, "WARNING: ", log.Ldate|log.Ltime|log.Lshortfile)
 	Error = log.New(os.Stderr, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
@@ -109,7 +110,7 @@ func defineRoutingRules() *mux.Router {
 /** Prints the current state of the node for debug purposes */
 func logNodeStateContinously(delay int) {
 	for {
-		Debug.Println(computeNodeState())
+		Info.Println(computeNodeState())
 		time.Sleep(time.Duration(delay) * time.Millisecond)
 	}
 }
