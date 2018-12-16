@@ -9,48 +9,75 @@ import (
 	"fmt"
 	"github.com/emirpasic/gods/sets/treeset"
 	"github.com/gorilla/mux"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 )
 
-// The head of the currently longest chain
-var currentHead string
-// The first block in the chain
-var genesis string
+var (
+	// Logger for different levels
+	Debug   *log.Logger
+	Info    *log.Logger
+	Warning *log.Logger
+	Error   *log.Logger
 
-// All known valid blocks: Blockhash -> Block
-var blocklist = make(map[string]blockchain.Block)
-// I need those sorted by fee to always incorporate max fees into mined blocklist
-var unclaimedTransactions = treeset.NewWith(compareTxByCollectableFee)
-// Hash -> UTXO
-var utxoList = make(map[string]blockchain.Txoutput)
-var LINE_FEED = []byte{0x0A}
+	// The head of the currently longest chain
+	currentHead string
+	// The first block in the chain
+	genesis string
 
-func main() {
-	host := flag.String("host", "localhost", "Host to listen on")
-	port := flag.Int("port", 8000, "Port to listen on")
-	initalPeer := flag.String("initial-peer", "", "A initially known peer, that can be contacted to fill the peerlist")
-	flag.Parse()
-	networking.SelfAddr = *networking.CreatePeer(fmt.Sprintf("http://%s:%d",*host,*port))
+	// All known valid blocks: Blockhash -> Block
+	blocklist = make(map[string]blockchain.Block)
+	// I need those sorted by fee to always incorporate max fees into mined blocklist
+	unclaimedTransactions = treeset.NewWith(compareTxByCollectableFee)
+	// Hash -> UTXO
+	utxoList  = make(map[string]blockchain.Txoutput)
+	LINE_FEED = []byte{0x0A}
+)
 
+func init() {
+	Debug = log.New(ioutil.Discard, "DEBUG: ", log.Ldate|log.Ltime|log.Lshortfile)
+	Info = log.New(os.Stdout, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
+	Warning = log.New(os.Stdout, "WARNING: ", log.Ldate|log.Ltime|log.Lshortfile)
+	Error = log.New(os.Stderr, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
 
 	var head = blockchain.CreateGenesisBlock()
 	genesis = head.ComputeHash()
 	currentHead = genesis
 	blocklist[currentHead] = head
+}
 
+func main() {
+	host, port, initalPeer := parseCommandLineArguments()
+
+	simulateActiveChain(host, port, initalPeer)
+
+	router := defineRoutingRules()
+	startRestAPI(router, host, port)
+}
+
+func simulateActiveChain(host *string, port *int, initalPeer *string) {
+	networking.SelfAddr = *networking.CreatePeer(fmt.Sprintf("http://%s:%d", *host, *port))
 	networking.FillPeerList(*initalPeer)
-	log.Printf("peerlist: %s\n", networking.PeerList)
 
 	go exchangePeersContinously(1000)
 	go mineContinously(200)
 	go createTxContinously(1000)
+}
 
-	router := defineRoutingRules()
+func parseCommandLineArguments() (*string, *int, *string) {
+	host := flag.String("host", "localhost", "Host to listen on")
+	port := flag.Int("port", 8000, "Port to listen on")
+	initalPeer := flag.String("initial-peer", "", "A initially known peer, that can be contacted to fill the peerlist")
+	flag.Parse()
+	return host, port, initalPeer
+}
 
+func startRestAPI(router *mux.Router, host *string, port *int) {
 	httpsrv := &http.Server{
 		Handler: router,
 		Addr:    fmt.Sprintf("%s:%d", *host, *port),
@@ -58,7 +85,6 @@ func main() {
 		WriteTimeout: 25 * time.Second,
 		ReadTimeout:  25 * time.Second,
 	}
-
 	log.Println("Listening for connections on", httpsrv.Addr)
 	httpsrv.ListenAndServe()
 }
@@ -82,11 +108,10 @@ func defineRoutingRules() *mux.Router {
 
 func exchangePeersContinously(delay int) {
 	for {
-		log.Println("pl: ", networking.PeerList)
-		for i:=0; i<len(networking.PeerList); i++ {
+		for i := 0; i < len(networking.PeerList); i++ {
 			networking.ContactPeer(i)
 		}
-		time.Sleep(time.Duration(delay)*time.Millisecond)
+		time.Sleep(time.Duration(delay) * time.Millisecond)
 	}
 }
 
@@ -202,7 +227,9 @@ func GetPeers(writer http.ResponseWriter, request *http.Request) {
 	peeraddr := request.FormValue("url")
 	if peeraddr != "" {
 		created := networking.CreatePeer(peeraddr)
-		if created!=nil && created.Validate() { networking.AddPeer(*created) }
+		if created != nil && created.Validate() {
+			networking.AddPeer(*created)
+		}
 	}
 	writeJson(networking.PeerList, writer)
 }
