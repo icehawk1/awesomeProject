@@ -8,8 +8,8 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	PeerList = append(PeerList, CreatePeer("http://localhost:8000"))
-	PeerList = append(PeerList, CreatePeer("http://localhost:63975"))
+	PeerList = append(PeerList, *CreatePeer("http://localhost:8000"))
+	PeerList = append(PeerList, *CreatePeer("http://localhost:8001"))
 
 	os.Exit(m.Run())
 }
@@ -32,7 +32,8 @@ func TestBroadcastTransaction(t *testing.T) {
 }
 
 func TestBroadcastBlock(t *testing.T) {
-	block := blockchain.Block{Prev: "", Hash: "00009DB3B9F2ACD62E2AE8725EB5AF49438D2AF0B79F4FC196BA2F5BDB1C1F36"}
+	txlist := blockchain.CreateMerklebaum([]blockchain.Transaction{{Message: "Tx nummer 1"}})
+	block := blockchain.Block{Prev: "", Hash: "abcdef", Transactions: txlist}
 	statusCodes := BroadcastBlock(block)
-	assert.Equal(t, []int{400, 400}, statusCodes)
+	assert.Equal(t, []int{422, 422}, statusCodes)
 }

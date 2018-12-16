@@ -9,53 +9,83 @@ import (
 	"fmt"
 	"github.com/emirpasic/gods/sets/treeset"
 	"github.com/gorilla/mux"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
-	"regexp"
+	"os"
 	"strconv"
 	"time"
 )
 
-// The head of the currently longest chain
-var currentHead string
-// The first block in the chain
-var genesis string
+var (
+	// Logger for different levels
+	Debug   *log.Logger
+	Info    *log.Logger
+	Warning *log.Logger
+	Error   *log.Logger
 
-// All known valid blocks: Blockhash -> Block
-var blocklist = make(map[string]blockchain.Block)
-// I need those sorted by fee to always incorporate max fees into mined blocklist
-var unclaimedTransactions = treeset.NewWith(compareTxByCollectableFee)
-// Hash -> UTXO
-var utxoList = make(map[string]blockchain.Txoutput)
-var LINE_FEED = []byte{0x0A}
-var REGEX_VALID_HASH = regexp.MustCompile(`[a-fA-F0-9]{32}`)
+	// The head of the currently longest chain
+	currentHead string
+	// The first block in the chain
+	genesis string
 
-func main() {
-	host := *flag.String("host", "localhost", "Host to listen on")
-	port := *flag.Int("port", 8000, "Port to listen on")
-	flag.Parse()
-	//host:="localhost"
-	//	port:=8000
+	// All known valid blocks: Blockhash -> Block
+	blocklist = make(map[string]blockchain.Block)
+	// I need those sorted by fee to always incorporate max fees into mined blocklist
+	unclaimedTransactions = treeset.NewWith(compareTxByCollectableFee)
+	// Hash -> UTXO
+	utxoList  = make(map[string]blockchain.Txoutput)
+	LINE_FEED = []byte{0x0A}
+)
+
+func init() {
+	Debug = log.New(ioutil.Discard, "DEBUG: ", log.Ldate|log.Ltime|log.Lshortfile)
+	Info = log.New(os.Stdout, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
+	Warning = log.New(os.Stdout, "WARNING: ", log.Ldate|log.Ltime|log.Lshortfile)
+	Error = log.New(os.Stderr, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
 
 	var head = blockchain.CreateGenesisBlock()
 	genesis = head.ComputeHash()
 	currentHead = genesis
 	blocklist[currentHead] = head
+}
 
-	go mineContinously(200)
-	go createTxContinously(1000)
+func main() {
+	host, port, initalPeer := parseCommandLineArguments()
+
+	simulateActiveChain(host, port, initalPeer)
 
 	router := defineRoutingRules()
+	startRestAPI(router, host, port)
+}
 
+func simulateActiveChain(host *string, port *int, initalPeer *string) {
+	networking.SelfAddr = *networking.CreatePeer(fmt.Sprintf("http://%s:%d", *host, *port))
+	networking.FillPeerList(*initalPeer)
+
+	go exchangePeersContinously(1000)
+	go mineContinously(200)
+	go createTxContinously(1000)
+	go logNodeStateContinously(2000)
+}
+
+func parseCommandLineArguments() (*string, *int, *string) {
+	host := flag.String("host", "localhost", "Host to listen on")
+	port := flag.Int("port", 8000, "Port to listen on")
+	initalPeer := flag.String("initial-peer", "", "A initially known peer, that can be contacted to fill the peerlist")
+	flag.Parse()
+	return host, port, initalPeer
+}
+
+func startRestAPI(router *mux.Router, host *string, port *int) {
 	httpsrv := &http.Server{
 		Handler: router,
-		Addr:    fmt.Sprintf("%s:%d", host, port),
+		Addr:    fmt.Sprintf("%s:%d", *host, *port),
 		// Good practice: enforce timeouts for servers you create!
 		WriteTimeout: 25 * time.Second,
 		ReadTimeout:  25 * time.Second,
 	}
-
 	log.Println("Listening for connections on", httpsrv.Addr)
 	httpsrv.ListenAndServe()
 }
@@ -75,6 +105,31 @@ func defineRoutingRules() *mux.Router {
 	blockrouter.HandleFunc("/{hash:[a-fA-F0-9]+}", GetSpecificBlocks).Methods("GET")
 
 	return router
+}
+
+/** Prints the current state of the node for debug purposes */
+func logNodeStateContinously(delay int) {
+	for {
+		Info.Println(computeNodeState())
+		time.Sleep(time.Duration(delay) * time.Millisecond)
+	}
+}
+
+func computeNodeState() string {
+	return fmt.Sprintf("{ \"numpeers\"=%d, \"blockheight\"=%d, \"current_head\"=\"%s\", " +
+		"\"num_pending_tx\"=%d, num_utxo=%d }", len(networking.PeerList),
+		blockchain.ComputeBlockHeight(blocklist[currentHead],&blocklist), currentHead, unclaimedTransactions.Size(),
+		len(utxoList))
+}
+
+/** Exchanges peer lists, so that the network can form itself */
+func exchangePeersContinously(delay int) {
+	for {
+		for i := 0; i < len(networking.PeerList); i++ {
+			networking.ContactPeer(i)
+		}
+		time.Sleep(time.Duration(delay) * time.Millisecond)
+	}
 }
 
 /* Simulates people using the chain */
@@ -135,7 +190,7 @@ func PostTransaction(writer http.ResponseWriter, request *http.Request) {
 		writer.WriteHeader(400)
 		writer.Write([]byte(fmt.Sprintf("JSON is invalid: %s\n", err)))
 	} else {
-		writer.WriteHeader(400)
+		writer.WriteHeader(422)
 		writer.Write([]byte(fmt.Sprintf("Transaction %s is invalid\n", newtx.ComputeHash())))
 	}
 }
@@ -158,13 +213,13 @@ func PostBlock(writer http.ResponseWriter, request *http.Request) {
 	if newblock != nil {
 		newblock.Hash = newblock.ComputeHash()
 		if !newblock.Validate() {
-			writer.WriteHeader(400)
+			writer.WriteHeader(422)
 			writer.Write([]byte(fmt.Sprintf("Block %s is invalid\n", newblock.Hash)))
 			return
 		}
 
 		blocklist[newblock.Hash] = *newblock
-		if (blockchain.ComputeBlockHeight(*newblock, &blocklist) > blockchain.ComputeBlockHeight(blocklist[currentHead], &blocklist)) {
+		if blockchain.ComputeBlockHeight(*newblock, &blocklist) > blockchain.ComputeBlockHeight(blocklist[currentHead], &blocklist) {
 			currentHead = newblock.ComputeHash()
 		}
 
@@ -186,6 +241,13 @@ func GetAllBlocks(writer http.ResponseWriter, request *http.Request) {
 	writeJson(result, writer)
 }
 func GetPeers(writer http.ResponseWriter, request *http.Request) {
+	peeraddr := request.FormValue("url")
+	if peeraddr != "" {
+		created := networking.CreatePeer(peeraddr)
+		if created != nil && created.Validate() {
+			networking.AddPeer(*created)
+		}
+	}
 	writeJson(networking.PeerList, writer)
 }
 func GetSpecificBlocks(writer http.ResponseWriter, request *http.Request) {
@@ -211,7 +273,7 @@ func GetSpecificBlocks(writer http.ResponseWriter, request *http.Request) {
 	writeJson(result, writer)
 }
 func GetPing(writer http.ResponseWriter, request *http.Request) {
-	writer.Write([]byte("pong\n"))
+	writer.Write([]byte(fmt.Sprintf("Current state:\n%s\n",computeNodeState())))
 }
 
 func compareTxByCollectableFee(a, b interface{}) int {

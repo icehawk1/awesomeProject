@@ -77,6 +77,10 @@ func CreateTxOutput(value int, key ecdsa.PublicKey) Txoutput {
 }
 
 const Difficulty = 1
+func BlockhashSatifiesDifficulty(blockhash string) bool {
+	requiredPrefix := strings.Repeat("0", Difficulty)
+	return strings.HasPrefix(blockhash,requiredPrefix)
+}
 
 func Mine(txlist []Transaction, prevhash string) Block {
 	for {
@@ -88,12 +92,13 @@ func Mine(txlist []Transaction, prevhash string) Block {
 }
 
 func MineAttempt(txlist []Transaction, prevhash string) (Block, bool) {
-	requiredPrefix := strings.Repeat("0", Difficulty)
 	newblock := CreateBlock(txlist, prevhash)
-	return newblock, strings.HasPrefix(newblock.Hash, requiredPrefix)
+	return newblock, BlockhashSatifiesDifficulty(newblock.Hash)
 }
 
 func SelectTransactionsForNextBlock(pendingTx *treeset.Set) []Transaction {
+	if pendingTx==nil || pendingTx.Empty() {return []Transaction{}}
+
 	// Pending transactions are sorted by fee, just grabbing the first tx maximises overall fees
 	vals := pendingTx.Values()
 	result := make([]Transaction, 0, util.Min(MAX_TRANSACTIONS_PER_BLOCK, len(vals)))

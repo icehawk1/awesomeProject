@@ -104,6 +104,11 @@ func TestMine(t *testing.T) {
 	assert.True(t, actual.Validate())
 }
 
+func TestBlockhashSatifiesDifficulty(t *testing.T) {
+	assert.False(t, BlockhashSatifiesDifficulty("1234567890abcdef1234567890abcdef"))
+	assert.True(t, BlockhashSatifiesDifficulty("0034567890abcdef1234567890abcdef"))
+}
+
 func TestParseJsonBlock(t *testing.T) {
 	txlist := []Transaction{createTx(5, keylist[1]), createTx(6, keylist[2])}
 	genesis := CreateGenesisBlock()
